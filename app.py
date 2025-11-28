@@ -3,6 +3,7 @@ import pandas as pd
 from PIL import Image
 import time
 from datetime import datetime, timedelta
+import plotly.express as px # ADDED: For dynamic chart generation
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -100,7 +101,7 @@ def calculate_fsn(sales_df, demand_col_name):
     
     return sku_sales[['SKU_Clean', 'Units Sold', 'FSN Status']]
 
-# --- Service Modules: Inventory Planning (Updated to use Selectbox for Units Sold Column) ---
+# --- Service Modules: Inventory Planning ---
 
 def service_inventory_planning():
     st.subheader("📦 Inventory Planning")
@@ -168,7 +169,7 @@ def service_inventory_planning():
                 key="sales_demand_col_select"
             )
 
-            # --- NEW SELECTBOX FOR WAREHOUSE / LOCATION COLUMN ---
+            # --- SELECTBOX FOR WAREHOUSE / LOCATION COLUMN ---
             default_warehouse_index = sales_cols.index('Warehouse') if 'Warehouse' in sales_cols else (sales_cols.index(sales_sku_col) + 2 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 2 else 0)
 
             warehouse_col = st.selectbox(
@@ -249,7 +250,6 @@ def service_inventory_planning():
                 st.subheader("3. FSN-Wise Demand in Warehouses (Top 20 SKU/Warehouse Combinations)")
                 
                 # Calculate aggregated demand volume per SKU-Warehouse combination
-                # 'Warehouse' is now guaranteed to be the column name due to renaming above
                 warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Demand (30D)'].sum().reset_index()
                 
                 # Merge with inventory for stock visibility
@@ -261,6 +261,57 @@ def service_inventory_planning():
                 demand_report.sort_values(by='Demand (30D)', ascending=False, inplace=True)
                 
                 st.dataframe(demand_report.head(20), use_container_width=True)
+                
+                
+                # --- Report 4: Zone-Wise FSN Distribution (Pie Charts) ---
+                st.subheader("4. Zone-Wise FSN Distribution (Demand Volume)")
+                st.caption("Distribution of Fast, Slow, and Non-Moving SKUs by regional demand volume.")
+                
+                # Define a simple WAREHOUSE_TO_ZONE_MAP based on mock data
+                WAREHOUSE_TO_ZONE_MAP = {
+                    'BLR': 'South',
+                    'DEL': 'North',
+                    'MAA': 'South',
+                    # Add more mappings here for real data
+                }
+
+                # 1. Add Zone column to sales_df
+                sales_df['Zone'] = sales_df['Warehouse'].map(WAREHOUSE_TO_ZONE_MAP).fillna('Other')
+
+                # 2. Calculate FSN demand by Zone
+                zone_fsn_demand = sales_df.groupby(['Zone', 'FSN Status'])['Demand (30D)'].sum().reset_index()
+                zone_fsn_demand.rename(columns={'Demand (30D)': 'Demand Volume'}, inplace=True)
+
+                zones = zone_fsn_demand['Zone'].unique()
+                cols = st.columns(len(zones))
+
+                for i, zone in enumerate(zones):
+                    zone_data = zone_fsn_demand[zone_fsn_demand['Zone'] == zone]
+                    
+                    # Create the Pie Chart using Plotly
+                    fig = px.pie(
+                        zone_data,
+                        values='Demand Volume',
+                        names='FSN Status',
+                        title=f'Demand FSN Breakdown in {zone} Zone',
+                        color='FSN Status',
+                        # Consistent coloring based on FSN status
+                        color_discrete_map={
+                            'F (Fast Moving)': '#34D399',  # Tailwind Green-500
+                            'S (Slow Moving)': '#FBBF24',  # Tailwind Amber-400
+                            'N (Non-Moving)': '#F87171'    # Tailwind Red-400
+                        }
+                    )
+                    # Customize appearance
+                    fig.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#000000', width=1)))
+                    fig.update_layout(
+                        showlegend=False,
+                        title_x=0.5,
+                        margin=dict(l=20, r=20, t=40, b=20)
+                    )
+                    
+                    with cols[i]:
+                        st.plotly_chart(fig, use_container_width=True)
 
             else:
                 st.warning("Please upload both the Current Warehouse Inventory and Sales files to run the FSN analysis.")
