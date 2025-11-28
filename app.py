@@ -206,14 +206,47 @@ def service_inventory_planning():
     tab1, tab2 = st.tabs(["FBF (Flipkart)", "FBA (Amazon)"])
     
     with tab1:
-        st.markdown("### Fulfilled by Flipkart (FBF)")
-        st.info("Restock recommendations for Flipkart Fulfillment Centers.")
-        st.dataframe(pd.DataFrame({
-            "SKU": ["SKU-001", "SKU-005"],
-            "Current Stock": [12, 5],
-            "Recommended Send": [50, 100],
-            "Days of Cover": [5, 2]
-        }), use_container_width=True)
+        st.markdown("### Fulfilled by Flipkart (FBF) Inventory Planner")
+        st.info("Upload your inventory and sales data to generate restock recommendations and demand forecasts.")
+
+        # File Uploads
+        col_fbf1, col_fbf2 = st.columns(2)
+        with col_fbf1:
+            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV)", type=['csv'], key="fbf_inventory")
+        with col_fbf2:
+            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV)", type=['csv'], key="fbf_sales")
+
+        if st.button("Generate Inventory Analysis", key="analyze_fbf"):
+            if inventory_file is not None and sales_file is not None:
+                simulate_processing()
+                st.success("Data loaded and analyzed successfully (using simulated data).")
+                
+                # 1. State-Wise Demand (Simulated)
+                st.subheader("1. State-Wise Demand (Last 30 Days)")
+                st.bar_chart(pd.DataFrame({
+                    'State': ['MH', 'KA', 'DL', 'TN', 'UP'],
+                    'Demand (Units)': [450, 320, 280, 150, 90]
+                }).set_index('State'))
+
+                # 2. Warehouse Wise Demand (Simulated)
+                st.subheader("2. Warehouse Wise Demand")
+                st.dataframe(pd.DataFrame({
+                    'Warehouse': ['Bangalore', 'Mumbai', 'Kolkata'],
+                    'Available Stock': [1200, 800, 500],
+                    'Forecast Demand': [1500, 900, 600],
+                    'Restock Needed': [300, 100, 100]
+                }).set_index('Warehouse'), use_container_width=True)
+                
+                # 3. SKU Level Sales (Best and Worst) (Simulated)
+                st.subheader("3. SKU Level Sales Summary")
+                sku_data = {
+                    'SKU': ['SKU-001 (Best)', 'SKU-003 (Good)', 'SKU-005 (Average)', 'SKU-002 (Worst)', 'SKU-004 (Worst)'],
+                    'Units Sold (30D)': [850, 420, 300, 50, 10],
+                    'Sales Performance': ['Best Performer', 'Good Performer', 'Average', 'Worst Performer', 'Worst Performer']
+                }
+                st.dataframe(pd.DataFrame(sku_data), use_container_width=True)
+            else:
+                st.warning("Please upload both the Current Warehouse Inventory and Sales files to run the analysis.")
         
     with tab2:
         st.markdown("### Fulfilled by Amazon (FBA)")
