@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from PIL import Image
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -269,32 +269,145 @@ def service_earning_summary():
 # --- Service Modules: Productivity ---
 
 def service_task_tracker():
-    st.subheader("✅ Task Tracker")
+    st.subheader("✅ Task Tracker Dashboard")
     
-    with st.form(key='task_form', clear_on_submit=True):
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            new_task = st.text_input("New Task")
-        with col2:
-            add_task = st.form_submit_button("Add Task")
-            
-        if add_task and new_task:
-            st.session_state.tasks.append({"task": new_task, "status": "Pending", "date": datetime.now().strftime("%Y-%m-%d")})
-            st.rerun()
-
+    # --- 1. Cleanup Logic (Remove tasks completed > 7 days ago) ---
     if st.session_state.tasks:
-        for i, task in enumerate(st.session_state.tasks):
-            col1, col2, col3 = st.columns([3, 1, 1])
-            with col1:
-                st.write(f"{i+1}. {task['task']}")
-            with col2:
-                st.caption(task['date'])
-            with col3:
-                if st.button("Complete", key=f"del_{i}"):
-                    st.session_state.tasks.pop(i)
-                    st.rerun()
+        now = datetime.now()
+        cleaned_tasks = []
+        for task in st.session_state.tasks:
+            keep = True
+            # Check if task is completed and how long ago
+            if task.get("Status") == "Completed" and task.get("Completed At"):
+                try:
+                    completion_time = task["Completed At"]
+                    # Calculate difference
+                    if (now - completion_time).days > 7:
+                        keep = False
+                except:
+                    pass # Keep if date parsing fails
+            
+            if keep:
+                cleaned_tasks.append(task)
+        st.session_state.tasks = cleaned_tasks
+
+    # --- 2. Dashboard Metrics ---
+    if st.session_state.tasks:
+        df_metrics = pd.DataFrame(st.session_state.tasks)
+        if "Status" in df_metrics.columns:
+            status_counts = df_metrics['Status'].value_counts()
+            
+            m1, m2, m3, m4, m5 = st.columns(5)
+            m1.metric("Total Tasks", len(df_metrics))
+            m2.metric("Assigned", status_counts.get("Assigned", 0))
+            m3.metric("WIP", status_counts.get("WIP", 0))
+            m4.metric("Road Block", status_counts.get("Road Block", 0))
+            m5.metric("Completed", status_counts.get("Completed", 0))
+            st.divider()
     else:
-        st.info("No pending tasks. Good job!")
+        st.info("No tasks in the tracker. Add one below to get started.")
+
+    # --- 3. Add New Task Form ---
+    with st.expander("➕ Add New Task", expanded=False):
+        with st.form(key='add_task_form', clear_on_submit=True):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                priority = st.selectbox("Priority", ["High", "Medium", "Low"])
+                task_name = st.text_input("Task Name")
+                project = st.text_input("Project")
+            with col2:
+                channel = st.text_input("Channel")
+                given_by = st.text_input("Task Given By")
+                assigned_to = st.text_input("Assigned To")
+            with col3:
+                followup_by = st.text_input("Followup By")
+                lead_time = st.text_input("Lead Time (e.g. 2 Days)")
+                remarks = st.text_area("Remarks")
+            
+            submit_button = st.form_submit_button(label='Add Task')
+            
+            if submit_button and task_name:
+                new_task = {
+                    "Priority": priority,
+                    "Task Name": task_name,
+                    "Project": project,
+                    "Channel": channel,
+                    "Task Given By": given_by,
+                    "Assigned To": assigned_to,
+                    "Followup By": followup_by,
+                    "Lead Time": lead_time,
+                    "Status": "Assigned",
+                    "Remarks": remarks,
+                    "Created At": datetime.now(),
+                    "Completed At": None
+                }
+                st.session_state.tasks.append(new_task)
+                st.rerun()
+
+    # --- 4. Task Table (Editable) ---
+    if st.session_state.tasks:
+        st.subheader("📋 Task List")
+        
+        # Prepare DataFrame
+        df = pd.DataFrame(st.session_state.tasks)
+        
+        # Add Serial Number
+        df.insert(0, 'Srl No.', range(1, 1 + len(df)))
+        
+        # Define Column Configuration
+        column_config = {
+            "Srl No.": st.column_config.NumberColumn(disabled=True, width="small"),
+            "Priority": st.column_config.SelectboxColumn(
+                "Priority",
+                options=["High", "Medium", "Low"],
+                width="small",
+                required=True
+            ),
+            "Status": st.column_config.SelectboxColumn(
+                "Status",
+                options=["Assigned", "Accepted", "WIP", "Road Block", "Completed"],
+                width="medium",
+                required=True
+            ),
+            "Task Name": st.column_config.TextColumn("Task Name", width="medium"),
+            "Created At": None, # Hide system columns
+            "Completed At": None
+        }
+
+        # Editable Dataframe
+        edited_df = st.data_editor(
+            df,
+            column_config=column_config,
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True,
+            key="task_editor"
+        )
+
+        # Sync changes back to Session State
+        # We drop 'Srl No.' before saving back
+        updated_data = edited_df.drop(columns=['Srl No.']).to_dict('records')
+        
+        # Update timestamp logic for completion
+        state_updated = False
+        for i, task in enumerate(updated_data):
+            # Check if status changed to Completed
+            if task['Status'] == 'Completed':
+                if not task.get('Completed At'):
+                    task['Completed At'] = datetime.now()
+                    state_updated = True
+            else:
+                # Reset completion time if moved out of Completed
+                if task.get('Completed At') is not None:
+                    task['Completed At'] = None
+                    state_updated = True
+        
+        # Only update session state if data actually changed to prevent infinite loops
+        # Comparison excluding nan/timestamps nuances
+        if updated_data != st.session_state.tasks:
+            st.session_state.tasks = updated_data
+            if state_updated:
+                st.rerun()
 
 # --- Main Navigation Sidebar ---
 
