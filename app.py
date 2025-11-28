@@ -18,7 +18,7 @@ if 'tasks' not in st.session_state:
 
 # --- Helper Functions ---
 def local_css(file_name):
-    # Placeholder for custom CSS if needed
+    """Placeholder for custom CSS if needed"""
     pass
 
 def simulate_processing():
@@ -33,57 +33,44 @@ def simulate_processing():
 # --- Data Simulation Functions (To run the demo without real files) ---
 
 def create_mock_sales_df():
-    """
-    Simulates sales data (25 total entries) with dirty SKUs.
-    SKU length is fixed to 25 to match other columns.
-    10 fast-moving SKUs (PROD) repeated, 5 slow SKUs (SLOW). Total unique SKUs: 15.
-    """
-    
-    # 10 fast SKUs repeated twice (20 items) + 5 slow SKUs (5 items) = 25 items
+    """Simulates sales data with 'Column F (SKU)' as the header."""
     prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
     slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
     
     data = {
         'SKU_Dirty': prod_skus * 2 + slow_skus, # Length 25
-        # 25 manually entered sales figures
         'Units Sold': [500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10, 50, 40, 30, 20, 10, 5, 4, 3, 2, 1],
-        # 25 state entries
         'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA'],
-        # 25 warehouse entries
         'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA']
     }
     
     df = pd.DataFrame(data)
-    # Simulate Column F being the SKU column (Updated based on user request)
+    # Use the hardcoded name for mock data initialization
     df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True) 
+    df['Column E (FSN Ref)'] = 'FSN_Ref_Data' # Add an E column for context
     return df
 
 def create_mock_inventory_df():
-    """
-    Simulates inventory data for the 15 unique SKUs used in the sales file.
-    Total entries: 15.
-    """
-    
-    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] # 10 SKUs
-    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)] # 5 SKUs
+    """Simulates inventory data with 'Column F (SKU)' as the header."""
+    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
+    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
     
     data = {
-        # 15 unique SKUs
         'SKU_Dirty': prod_skus + slow_skus,
-        # 15 warehouse entries
         'Warehouse': ['BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL'],
-        # 15 stock entries
         'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2]
     }
     df = pd.DataFrame(data)
-    # Simulate Column F being the SKU column (Updated based on user request)
+    # Use the hardcoded name for mock data initialization
     df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True)
+    df['Column G (Other Data)'] = 'Other_Inventory_Data' 
     return df
 
 def clean_sku(sku_series):
     """Removes special characters ' " ' and text 'SKU:' from the SKU column."""
     if sku_series.dtype == 'object':
-        return sku_series.str.replace(r'"|SKU:', '', regex=True).str.strip()
+        # This regex handles both the outer quotes and the "SKU:" prefix
+        return sku_series.astype(str).str.replace(r'"|SKU:', '', regex=True).str.strip()
     return sku_series # Return original if not string
 
 def calculate_fsn(sales_df):
@@ -115,7 +102,7 @@ def calculate_fsn(sales_df):
     
     return sku_sales[['SKU_Clean', 'Units Sold', 'FSN Status']]
 
-# --- Service Modules: Inventory Planning (Updated) ---
+# --- Service Modules: Inventory Planning (Updated to use Selectbox for SKU Column) ---
 
 def service_inventory_planning():
     st.subheader("📦 Inventory Planning")
@@ -124,36 +111,54 @@ def service_inventory_planning():
     
     with tab1:
         st.markdown("### Fulfilled by Flipkart (FBF) Inventory & FSN Planner")
-        # Updated info message to reflect Column F
-        st.info("Upload your inventory and sales data to classify SKUs by movement (Fast, Slow, Non-moving) and generate demand forecasts. Ensure SKU is in Column F.")
+        st.info("Upload your inventory and sales data. You must select the correct SKU column from the dropdowns after upload.")
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
         
-        # Initialize with mock data if not set, or load uploaded file
+        # Initialize with mock data if not set
         if 'fbf_inventory_data' not in st.session_state:
             st.session_state['fbf_inventory_data'] = create_mock_inventory_df()
-        
+        if 'fbf_sales_data' not in st.session_state:
+            st.session_state['fbf_sales_data'] = create_mock_sales_df()
+
+        # --- UPLOADER 1: INVENTORY ---
         with col_fbf1:
-            # Updated file uploader description
-            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV) - Column F is SKU", type=['csv'], key="fbf_inventory")
+            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV)", type=['csv'], key="fbf_inventory")
             if inventory_file:
                 try:
                     st.session_state['fbf_inventory_data'] = pd.read_csv(inventory_file)
                 except Exception as e:
                     st.error(f"Error reading inventory file: {e}")
 
-        if 'fbf_sales_data' not in st.session_state:
-            st.session_state['fbf_sales_data'] = create_mock_sales_df()
+            inv_cols = st.session_state['fbf_inventory_data'].columns.tolist()
+            default_inv_index = inv_cols.index('Column F (SKU)') if 'Column F (SKU)' in inv_cols else 0
+            
+            inv_sku_col = st.selectbox(
+                "Select SKU Column (Inventory)", 
+                inv_cols, 
+                index=default_inv_index,
+                key="inv_sku_col_select"
+            )
 
+        # --- UPLOADER 2: SALES ---
         with col_fbf2:
-            # Updated file uploader description
-            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV) - Column F is SKU", type=['csv'], key="fbf_sales")
+            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV)", type=['csv'], key="fbf_sales")
             if sales_file:
                 try:
                     st.session_state['fbf_sales_data'] = pd.read_csv(sales_file)
                 except Exception as e:
                     st.error(f"Error reading sales file: {e}")
+
+            sales_cols = st.session_state['fbf_sales_data'].columns.tolist()
+            default_sales_index = sales_cols.index('Column F (SKU)') if 'Column F (SKU)' in sales_cols else 0
+            
+            sales_sku_col = st.selectbox(
+                "Select SKU Column (Sales)", 
+                sales_cols, 
+                index=default_sales_index,
+                key="sales_sku_col_select"
+            )
 
         if st.button("Generate FSN & Inventory Analysis", key="analyze_fbf"):
             
@@ -164,12 +169,15 @@ def service_inventory_planning():
                 sales_df = st.session_state['fbf_sales_data'].copy()
                 inventory_df = st.session_state['fbf_inventory_data'].copy()
 
-                # Set SKU column to 'Column F (SKU)' as requested by user
-                sku_col = 'Column F (SKU)'
+                # Data Cleaning: Use the dynamically selected column for cleaning
+                # This resolves the KeyError you were encountering.
+                try:
+                    sales_df['SKU_Clean'] = clean_sku(sales_df[sales_sku_col])
+                    inventory_df['SKU_Clean'] = clean_sku(inventory_df[inv_sku_col])
+                except KeyError as e:
+                    st.error(f"Critical Error: The selected SKU column '{e.args[0]}' was not found in one of the dataframes. Please re-upload the file or ensure the correct column is selected.")
+                    return # Stop execution if a core column is missing
 
-                # Data Cleaning: Remove " and SKU: from Column F
-                sales_df['SKU_Clean'] = clean_sku(sales_df[sku_col])
-                inventory_df['SKU_Clean'] = clean_sku(inventory_df[sku_col])
                 
                 sales_df.rename(columns={'Units Sold': 'Demand (30D)'}, inplace=True)
 
