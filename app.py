@@ -3,7 +3,7 @@ import pandas as pd
 from PIL import Image
 import time
 from datetime import datetime, timedelta
-import plotly.express as px # ADDED: For dynamic chart generation
+import plotly.express as px
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -34,52 +34,69 @@ def simulate_processing():
 # --- Data Simulation Functions (To run the demo without real files) ---
 
 def create_mock_sales_df():
-    """Simulates sales data with 'Column F (SKU)', 'Units Sold', and 'Warehouse' as default headers."""
-    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
-    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
+    """Simulates sales data with 'Column F (SKU)', 'Units Sold', 'State', and 'Warehouse' headers."""
+    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 16)] # 15 unique SKUs
+    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 11)] # 10 slow SKUs
+    
+    skus = prod_skus + slow_skus
     
     data = {
-        'Column F (SKU)': prod_skus * 2 + slow_skus, # Length 25
-        'Units Sold': [500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10, 50, 40, 30, 20, 10, 5, 4, 3, 2, 1],
-        'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA'],
-        'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA']
+        'Column F (SKU)': skus * 2, # Total 50 rows
+        'Units Sold': [500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10,
+                       5, 4, 3, 2, 1, 500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10,
+                       5, 4, 3, 2, 1, 10, 8, 6, 4, 2, 1, 1, 1, 1, 1],
+        'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'UP', 'DL', 'WB', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL',
+                  'GJ', 'KA', 'HR', 'TN', 'MH', 'AP', 'KA', 'DL', 'TN', 'MH', 'MP', 'DL', 'WB', 'MH', 'KA',
+                  'DL', 'TN', 'MH', 'KA', 'DL', 'GJ', 'KA', 'HR', 'TN', 'MH', 'AP', 'KA', 'DL', 'TN', 'MH',
+                  'MP', 'DL', 'WB', 'MH', 'KA'],
+        'Warehouse': ['MUM', 'BLR', 'DEL', 'MAA', 'MUM', 'LKO', 'DEL', 'CCU', 'MUM', 'BLR', 'DEL', 'MAA', 'MUM', 'BLR', 'DEL',
+                      'AHM', 'BLR', 'CHD', 'MAA', 'MUM', 'HYD', 'BLR', 'DEL', 'MAA', 'MUM', 'JAI', 'DEL', 'BBI', 'MUM', 'BLR',
+                      'DEL', 'MAA', 'MUM', 'BLR', 'DEL', 'AHM', 'BLR', 'CHD', 'MAA', 'MUM', 'HYD', 'BLR', 'DEL', 'MAA', 'MUM',
+                      'JAI', 'DEL', 'BBI', 'MUM', 'BLR']
     }
     
     df = pd.DataFrame(data)
-    df['Column E (FSN Ref)'] = 'FSN_Ref_Data' # Add an E column for context
+    df['Column E (FSN Ref)'] = 'FSN_Ref_Data'
     return df
 
 def create_mock_inventory_df():
-    """Simulates inventory data with 'Column F (SKU)' as the header."""
-    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
-    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
+    """Simulates inventory data with 'Column F (SKU)' and 'Warehouse' headers."""
+    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 16)]
+    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 11)]
+    
+    skus = prod_skus + slow_skus
     
     data = {
-        'Column F (SKU)': prod_skus + slow_skus,
-        'Warehouse': ['BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL'],
-        'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2]
+        'Column F (SKU)': skus,
+        'Warehouse': ['BLR', 'DEL', 'MAA', 'MUM', 'CCU', 'HYD', 'CHD', 'AHM', 'LKO', 'BBI'] * 2 + ['BLR', 'DEL', 'MAA', 'MUM', 'CCU'],
+        'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     }
     df = pd.DataFrame(data)
     df['Column G (Other Data)'] = 'Other_Inventory_Data' 
     return df
 
+# Detailed India Zone Mapping for Report 2
+WAREHOUSE_TO_ZONE_MAP = {
+    'BLR': 'South', 'MAA': 'South', 'HYD': 'South', 'COK': 'South', 'AP': 'South', 'TN': 'South', 'KA': 'South',
+    'DEL': 'North', 'CHD': 'North', 'JAI': 'North', 'LKO': 'North', 'UP': 'North', 'HR': 'North', 'DL': 'North',
+    'CCU': 'East', 'BBI': 'East', 'GHY': 'East', 'WB': 'East',
+    'MUM': 'West', 'PNQ': 'West', 'AHM': 'West', 'MH': 'West', 'GJ': 'West',
+    'MP': 'Central' # Adding Central for completeness
+}
+
 def clean_sku(sku_series):
     """Removes special characters ' " ' and text 'SKU:' from the SKU column."""
     if sku_series.dtype == 'object':
-        # This regex handles both the outer quotes and the "SKU:" prefix
         return sku_series.astype(str).str.replace(r'"|SKU:', '', regex=True).str.strip()
-    return sku_series # Return original if not string
+    return sku_series
 
-# The calculate_fsn function now accepts the name of the demand column
 def calculate_fsn(sales_df, demand_col_name):
     """Calculates FSN status based on 70/20/10 sales volume split (ABC analysis principle)."""
     
-    # 1. Calculate total sales per SKU - NOW USES demand_col_name
     sku_sales = sales_df.groupby('SKU_Clean')[demand_col_name].sum().reset_index()
     sku_sales.rename(columns={demand_col_name: 'Units Sold'}, inplace=True)
     sku_sales = sku_sales.sort_values(by='Units Sold', ascending=False).reset_index(drop=True)
     
-    # 2. Calculate cumulative percentage
     total_sales = sku_sales['Units Sold'].sum()
     if total_sales == 0:
          sku_sales['FSN Status'] = 'N (Non-Moving)'
@@ -88,11 +105,10 @@ def calculate_fsn(sales_df, demand_col_name):
     sku_sales['Sales Percentage'] = (sku_sales['Units Sold'] / total_sales) * 100
     sku_sales['Cumulative Percentage'] = sku_sales['Sales Percentage'].cumsum()
     
-    # 3. Apply FSN classification (70% Fast, 20% Slow, 10% Non)
     def assign_fsn(cumulative_perc):
         if cumulative_perc <= 70:
             return 'F (Fast Moving)'
-        elif cumulative_perc <= 90: # 70% + 20% = 90%
+        elif cumulative_perc <= 90:
             return 'S (Slow Moving)'
         else:
             return 'N (Non-Moving)'
@@ -110,7 +126,7 @@ def service_inventory_planning():
     
     with tab1:
         st.markdown("### Fulfilled by Flipkart (FBF) Inventory & FSN Planner")
-        st.info("Upload your inventory and sales data. You must select the correct SKU, Demand, and Warehouse columns after upload.")
+        st.info("Upload your inventory and sales data. You must select the correct SKU, Demand, State, and Warehouse columns after upload.")
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
@@ -150,8 +166,9 @@ def service_inventory_planning():
                     st.error(f"Error reading sales file: {e}")
 
             sales_cols = st.session_state['fbf_sales_data'].columns.tolist()
-            default_sales_sku_index = sales_cols.index('Column F (SKU)') if 'Column F (SKU)' in sales_cols else 0
             
+            # SKU
+            default_sales_sku_index = sales_cols.index('Column F (SKU)') if 'Column F (SKU)' in sales_cols else 0
             sales_sku_col = st.selectbox(
                 "Select SKU Column (Sales)", 
                 sales_cols, 
@@ -159,9 +176,8 @@ def service_inventory_planning():
                 key="sales_sku_col_select"
             )
             
-            # --- SELECTBOX FOR UNITS SOLD / DEMAND COLUMN ---
+            # Demand/Units Sold
             default_demand_index = sales_cols.index('Units Sold') if 'Units Sold' in sales_cols else (sales_cols.index(sales_sku_col) + 1 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 1 else 0)
-
             demand_col = st.selectbox(
                 "Select Units Sold / Demand Column (Sales)", 
                 sales_cols, 
@@ -169,14 +185,22 @@ def service_inventory_planning():
                 key="sales_demand_col_select"
             )
 
-            # --- SELECTBOX FOR WAREHOUSE / LOCATION COLUMN ---
+            # Warehouse
             default_warehouse_index = sales_cols.index('Warehouse') if 'Warehouse' in sales_cols else (sales_cols.index(sales_sku_col) + 2 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 2 else 0)
-
             warehouse_col = st.selectbox(
                 "Select Warehouse/Location Column (Sales)",
                 sales_cols,
                 index=default_warehouse_index,
                 key="sales_warehouse_col_select"
+            )
+            
+            # State
+            default_state_index = sales_cols.index('State') if 'State' in sales_cols else (sales_cols.index(sales_sku_col) + 3 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 3 else 0)
+            state_col = st.selectbox(
+                "Select State Column (Sales)",
+                sales_cols,
+                index=default_state_index,
+                key="sales_state_col_select"
             )
 
 
@@ -189,7 +213,6 @@ def service_inventory_planning():
                 sales_df = st.session_state['fbf_sales_data'].copy()
                 inventory_df = st.session_state['fbf_inventory_data'].copy()
 
-                # Data Cleaning: Use the dynamically selected column for cleaning
                 try:
                     # Clean SKUs
                     sales_df['SKU_Clean'] = clean_sku(sales_df[sales_sku_col])
@@ -199,119 +222,136 @@ def service_inventory_planning():
                     sales_df[demand_col] = pd.to_numeric(sales_df[demand_col], errors='coerce').fillna(0)
                     sales_df.rename(columns={demand_col: 'Demand (30D)'}, inplace=True)
                     
-                    # Standardize the Warehouse column name for consistent grouping
-                    sales_df.rename(columns={warehouse_col: 'Warehouse'}, inplace=True)
+                    # Standardize column names for consistent grouping
+                    sales_df.rename(columns={warehouse_col: 'Warehouse', state_col: 'State'}, inplace=True)
                     
                 except KeyError as e:
-                    st.error(f"Critical Error: The selected column '{e.args[0]}' was not found in one of the dataframes. Please re-upload the file or ensure the correct column is selected.")
-                    return # Stop execution if a core column is missing
+                    st.error(f"Critical Error: The selected column '{e.args[0]}' was not found in the Sales dataframe. Please select the correct columns.")
+                    return
                 except Exception as e:
                     st.error(f"Error during data processing (e.g., converting Demand column to numbers): {e}")
                     return
 
                 
-                # 2. FSN CLASSIFICATION
-                # Pass the original name of the column containing demand data
+                # 2. FSN CLASSIFICATION (Overall)
                 fsn_status_df = calculate_fsn(sales_df, 'Demand (30D)')
 
                 # Merge FSN status back into Sales and Inventory DFs
                 sales_df = sales_df.merge(fsn_status_df[['SKU_Clean', 'FSN Status']], on='SKU_Clean', how='left')
+                sales_df['FSN Status'].fillna('N (Non-Moving)', inplace=True) # SKUs with zero sales globally
                 
-                # Prepare Inventory DF for merging (needed to get 'Units Sold' (Demand) for non-movers)
+                # Merge FSN into inventory for non-moving analysis
                 inv_sku_demand = fsn_status_df[['SKU_Clean', 'Units Sold', 'FSN Status']].rename(columns={'Units Sold': 'Total Demand (30D)'})
                 inventory_df = inventory_df.merge(inv_sku_demand, on='SKU_Clean', how='left')
                 
-                # Fill missing FSN (for items in inventory but not sold in last 30 days)
                 inventory_df['FSN Status'].fillna('N (Non-Moving)', inplace=True)
                 inventory_df['Total Demand (30D)'].fillna(0, inplace=True)
                 
                 # --- REPORT GENERATION ---
                 simulate_processing()
                 st.markdown("---")
-                st.success("FSN Classification and Inventory Mapping Complete. Displaying FSN Reports based on cleaned SKUs.")
+                st.success("FSN Classification and Inventory Mapping Complete. Displaying FSN Reports.")
                 
                 
-                # Report 1: Best 10 FSN SKUs (Top 10 Fast Movers by Volume)
-                st.subheader("1. Best 10 FSN SKUs (Fastest Movers by Sales Volume)")
-                best_10_fsn = fsn_status_df[fsn_status_df['FSN Status'].str.startswith('F')].head(10).reset_index(drop=True)
-                best_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
-                st.dataframe(best_10_fsn, use_container_width=True)
+                # --- Report 1: FSN Demand Based on States ---
+                st.subheader("1. FSN Demand Distribution by State (Chart)")
+                st.caption("Total demand volume for F, S, and N items in major states.")
+
+                state_fsn_demand = sales_df.groupby(['State', 'FSN Status'])['Demand (30D)'].sum().reset_index()
+                
+                # Filter for states that have sales > 0 to keep the chart clean
+                total_state_demand = state_fsn_demand.groupby('State')['Demand (30D)'].sum()
+                states_to_plot = total_state_demand[total_state_demand > 0].index.tolist()
+                state_fsn_demand = state_fsn_demand[state_fsn_demand['State'].isin(states_to_plot)]
+
+                fig_state = px.bar(
+                    state_fsn_demand,
+                    x='State',
+                    y='Demand (30D)',
+                    color='FSN Status',
+                    title='FSN Demand Volume Stacked by State',
+                    color_discrete_map={
+                        'F (Fast Moving)': '#34D399',
+                        'S (Slow Moving)': '#FBBF24',
+                        'N (Non-Moving)': '#F87171'
+                    },
+                    text='Demand (30D)'
+                )
+                fig_state.update_traces(texttemplate='%{y}', textposition='outside')
+                fig_state.update_layout(xaxis={'categoryorder':'total descending'}, showlegend=True, height=500)
+                st.plotly_chart(fig_state, use_container_width=True)
 
 
-                # Report 2: Least 10 FSN SKUs (Slowest Selling Non-Movers)
-                st.subheader("2. Least 10 FSN SKUs (Non-Moving / Slowest Sellers)")
-                # Show Non-Moving items, sorted by lowest sales volume
-                worst_10_fsn = fsn_status_df.sort_values(by='Units Sold', ascending=True).head(10).reset_index(drop=True)
-                worst_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
-                st.dataframe(worst_10_fsn, use_container_width=True)
-
-
-                # Report 3: FSN-wise demand in warehouses (Top 20 table)
-                st.subheader("3. FSN-Wise Demand in Warehouses (Top 20 SKU/Warehouse Combinations)")
+                # --- Report 2: Zone-Wise FSN Distribution (Pie Charts) ---
+                st.subheader("2. Zone-Wise FSN Distribution (Demand Volume)")
+                st.caption("Distribution of Fast, Slow, and Non-Moving items by regional zone for tactical inventory movement.")
                 
-                # Calculate aggregated demand volume per SKU-Warehouse combination
-                warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Demand (30D)'].sum().reset_index()
-                
-                # Merge with inventory for stock visibility
-                inventory_stock = inventory_df.groupby(['SKU_Clean', 'Warehouse'])['Current Stock'].sum().reset_index()
-                
-                demand_report = warehouse_demand.merge(inventory_stock, on=['SKU_Clean', 'Warehouse'], how='left')
-                demand_report.rename(columns={'SKU_Clean': 'SKU Name', 'Demand (30D)': 'Demand (30D)', 'Current Stock': 'Available Stock'}, inplace=True)
-                
-                demand_report.sort_values(by='Demand (30D)', ascending=False, inplace=True)
-                
-                st.dataframe(demand_report.head(20), use_container_width=True)
-                
-                
-                # --- Report 4: Zone-Wise FSN Distribution (Pie Charts) ---
-                st.subheader("4. Zone-Wise FSN Distribution (Demand Volume)")
-                st.caption("Distribution of Fast, Slow, and Non-Moving SKUs by regional demand volume.")
-                
-                # Define a simple WAREHOUSE_TO_ZONE_MAP based on mock data
-                WAREHOUSE_TO_ZONE_MAP = {
-                    'BLR': 'South',
-                    'DEL': 'North',
-                    'MAA': 'South',
-                    # Add more mappings here for real data
-                }
-
-                # 1. Add Zone column to sales_df
-                sales_df['Zone'] = sales_df['Warehouse'].map(WAREHOUSE_TO_ZONE_MAP).fillna('Other')
+                # 1. Add Zone column to sales_df (mapping State to Zone for more comprehensive coverage)
+                # We map based on State first, if state is not in the map, try Warehouse
+                def map_to_zone(row):
+                    if row['State'] in WAREHOUSE_TO_ZONE_MAP:
+                        return WAREHOUSE_TO_ZONE_MAP[row['State']]
+                    return WAREHOUSE_TO_ZONE_MAP.get(row['Warehouse'], 'Other')
+                    
+                sales_df['Zone'] = sales_df.apply(map_to_zone, axis=1)
 
                 # 2. Calculate FSN demand by Zone
                 zone_fsn_demand = sales_df.groupby(['Zone', 'FSN Status'])['Demand (30D)'].sum().reset_index()
                 zone_fsn_demand.rename(columns={'Demand (30D)': 'Demand Volume'}, inplace=True)
 
-                zones = zone_fsn_demand['Zone'].unique()
-                cols = st.columns(len(zones))
+                # Filter for East, West, North, South
+                target_zones = ['North', 'South', 'East', 'West']
+                filtered_zones = [zone for zone in target_zones if zone in zone_fsn_demand['Zone'].unique()]
+                
+                if not filtered_zones:
+                    st.warning("No sales data found for North, South, East, or West zones in the uploaded file.")
+                    filtered_zones = zone_fsn_demand['Zone'].unique() # Fallback to all found zones
 
-                for i, zone in enumerate(zones):
+                # Display charts in columns (up to 4 per row)
+                num_zones = len(filtered_zones)
+                cols = st.columns(min(4, num_zones))
+                
+                for i, zone in enumerate(filtered_zones):
                     zone_data = zone_fsn_demand[zone_fsn_demand['Zone'] == zone]
                     
-                    # Create the Pie Chart using Plotly
                     fig = px.pie(
                         zone_data,
                         values='Demand Volume',
                         names='FSN Status',
-                        title=f'Demand FSN Breakdown in {zone} Zone',
+                        title=f'FSN Breakdown in {zone} Zone',
                         color='FSN Status',
-                        # Consistent coloring based on FSN status
                         color_discrete_map={
-                            'F (Fast Moving)': '#34D399',  # Tailwind Green-500
-                            'S (Slow Moving)': '#FBBF24',  # Tailwind Amber-400
-                            'N (Non-Moving)': '#F87171'    # Tailwind Red-400
+                            'F (Fast Moving)': '#34D399',
+                            'S (Slow Moving)': '#FBBF24',
+                            'N (Non-Moving)': '#F87171'
                         }
                     )
-                    # Customize appearance
-                    fig.update_traces(textinfo='percent+label', marker=dict(line=dict(color='#000000', width=1)))
-                    fig.update_layout(
-                        showlegend=False,
-                        title_x=0.5,
-                        margin=dict(l=20, r=20, t=40, b=20)
-                    )
+                    fig.update_traces(textinfo='percent', marker=dict(line=dict(color='#FFFFFF', width=1)))
+                    fig.update_layout(showlegend=False, title_x=0.5, margin=dict(l=20, r=20, t=40, b=20))
                     
-                    with cols[i]:
+                    with cols[i % 4]: # Use modulo 4 to wrap columns
                         st.plotly_chart(fig, use_container_width=True)
+                        
+                # --- Report 3: Top 10 / Least 10 FSN SKUs (Combined) ---
+                st.subheader("3. Top 10 / Least 10 FSN SKUs")
+                st.caption("Overall FSN status across all sales channels.")
+                
+                col_top, col_least = st.columns(2)
+                
+                # Top 10 FSN SKUs (Fastest Movers by Sales Volume)
+                with col_top:
+                    st.markdown("#### Top 10 FSN SKUs (Fast Movers)")
+                    top_10_fsn = fsn_status_df[fsn_status_df['FSN Status'].str.startswith('F')].head(10).reset_index(drop=True)
+                    top_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
+                    st.dataframe(top_10_fsn, use_container_width=True, hide_index=True)
+
+                # Least 10 FSN SKUs (Non-Moving / Slowest Sellers)
+                with col_least:
+                    st.markdown("#### Least 10 FSN SKUs (Non-Movers)")
+                    # Show Non-Moving items, sorted by lowest sales volume (those with 0 demand will be first)
+                    worst_10_fsn = fsn_status_df.sort_values(by='Units Sold', ascending=True).head(10).reset_index(drop=True)
+                    worst_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
+                    st.dataframe(worst_10_fsn, use_container_width=True, hide_index=True)
 
             else:
                 st.warning("Please upload both the Current Warehouse Inventory and Sales files to run the FSN analysis.")
@@ -478,7 +518,7 @@ def service_pnl():
     st.subheader("📉 Profit & Loss (P&L)")
     st.info("Monthly P&L statement generation.")
     
-    st.date_input("Select Date Range", value=(datetime(2023, 1, 1), datetime(2023, 1, 31)))
+    st.date_input("Select Date Range", value=(datetime(2023, 1, 1), datetime(datetime.now().year, datetime.now().month, 1) - timedelta(days=1)))
     if st.button("Generate P&L"):
         st.table(pd.DataFrame({
             "Item": ["Total Sales", "COGS", "Marketplace Fees", "Marketing", "Net Profit"],
@@ -660,7 +700,6 @@ def service_task_tracker():
         )
 
         # Sync changes back to Session State
-        # We drop 'Srl No.' before saving back
         updated_data = edited_df.drop(columns=['Srl No.']).to_dict('records')
         
         # Update timestamp logic for completion
@@ -677,8 +716,6 @@ def service_task_tracker():
                     task['Completed At'] = None
                     state_updated = True
         
-        # Only update session state if data actually changed to prevent infinite loops
-        # Comparison excluding nan/timestamps nuances
         if updated_data != st.session_state.tasks:
             st.session_state.tasks = updated_data
             if state_updated:
@@ -692,7 +729,6 @@ def main():
     st.sidebar.divider()
 
     # Sidebar Navigation Logic
-    # We use expanders to simulate collapsible categories
     
     # Initialize session state for page if not exists
     if 'current_page' not in st.session_state:
@@ -763,7 +799,6 @@ def main():
     elif page == "Return": service_return_analysis()
     # Note: Inventory Planning contains the FBF/FBA tabs
     elif page == "Inventory Planning": 
-        # The main function handles the tab switching internally
         service_inventory_planning() 
     
     # GST
