@@ -29,7 +29,28 @@ def simulate_processing():
         progress_bar.progress(i + 1)
     st.success("Operation Complete!")
 
-# --- Service Modules ---
+# --- Service Modules: Cataloging ---
+
+def service_listing_maker():
+    st.subheader("📝 Listing Maker")
+    st.markdown("Create A+ Content templates for Amazon/Flipkart.")
+    
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        title = st.text_input("Product Title")
+        price = st.number_input("Selling Price", min_value=0.0)
+        bullets = st.text_area("Bullet Points (One per line)")
+    
+    with col2:
+        st.markdown("### Preview")
+        st.markdown(f"**{title if title else 'Product Title'}**")
+        st.markdown(f"Price: ₹{price}")
+        if bullets:
+            for line in bullets.split('\n'):
+                st.markdown(f"- {line}")
+        else:
+            st.markdown("- Feature 1\n- Feature 2")
 
 def service_keyword_extractor():
     st.subheader("🔍 Keyword Extractor")
@@ -81,29 +102,46 @@ def service_image_optimizer():
                 st.success(f"Image optimized to {quality}% quality.")
                 st.download_button("Download Optimized Image", data=uploaded_file, file_name="optimized_image.jpg")
 
-def service_listing_maker():
-    st.subheader("📝 Listing Maker")
-    st.markdown("Create A+ Content templates for Amazon/Flipkart.")
-    
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        title = st.text_input("Product Title")
-        price = st.number_input("Selling Price", min_value=0.0)
-        bullets = st.text_area("Bullet Points (One per line)")
-    
-    with col2:
-        st.markdown("### Preview")
-        st.markdown(f"**{title if title else 'Product Title'}**")
-        st.markdown(f"Price: ₹{price}")
-        if bullets:
-            for line in bullets.split('\n'):
-                st.markdown(f"- {line}")
-        else:
-            st.markdown("- Feature 1\n- Feature 2")
+def service_listing_optimizer():
+    st.subheader("🚀 Listing Optimizer")
+    st.info("Analyze and improve your current product listings.")
+    st.text_input("Enter Product URL (Amazon/Flipkart)")
+    st.write("OR")
+    st.text_area("Paste Listing Content for Audit")
+    if st.button("Analyze Listing"):
+        simulate_processing()
+        st.success("Analysis Complete")
+        st.write("**Score: 7/10**")
+        st.warning("Suggestion: Title length is too short. Add more keywords.")
 
-def service_reconciliation():
-    st.subheader("📊 Reconciliation Report")
+# --- Service Modules: Pricing Tool ---
+
+def service_rate_card():
+    st.subheader("💳 Rate Card")
+    st.info("View marketplace rate cards and commission structures.")
+    
+    platform = st.selectbox("Select Platform", ["Amazon", "Flipkart", "Meesho"])
+    category = st.selectbox("Select Category", ["Electronics", "Fashion", "Home & Kitchen", "Beauty"])
+    
+    if st.button("Fetch Rates"):
+        st.table(pd.DataFrame({
+            "Fee Type": ["Commission", "Fixed Fee", "Collection Fee", "Shipping (Local)"],
+            "Percentage/Amount": ["12%", "₹15", "2%", "₹45"]
+        }))
+
+def service_pricing_update():
+    st.subheader("💲 Pricing Update")
+    st.info("Bulk update pricing across platforms.")
+    
+    st.file_uploader("Upload Pricing CSV Template")
+    if st.button("Process Price Updates"):
+        simulate_processing()
+        st.success("Prices updated successfully on 45 SKUs.")
+
+# --- Service Modules: Reporting ---
+
+def service_payment_reconciliation():
+    st.subheader("📊 Payment Reconciliation")
     st.write("Upload your Marketplace Settlement Report vs ERP Report.")
     
     col1, col2 = st.columns(2)
@@ -126,6 +164,69 @@ def service_reconciliation():
         df = pd.DataFrame(data)
         st.dataframe(df, use_container_width=True)
 
+def service_advertisement_analysis():
+    st.subheader("📢 Advertisement Analysis")
+    st.info("Analyze ACOS, ROAS, and ad spend efficiency.")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Ad Spend", "₹50,000", "+12%")
+    col2.metric("Sales from Ads", "₹2,25,000", "+8%")
+    col3.metric("ROAS", "4.5", "-0.2")
+    
+    st.bar_chart({"Campaign A": 40, "Campaign B": 25, "Campaign C": 35})
+
+def service_pnl():
+    st.subheader("📉 Profit & Loss (P&L)")
+    st.info("Monthly P&L statement generation.")
+    
+    st.date_input("Select Date Range", value=(datetime(2023, 1, 1), datetime(2023, 1, 31)))
+    if st.button("Generate P&L"):
+        st.table(pd.DataFrame({
+            "Item": ["Total Sales", "COGS", "Marketplace Fees", "Marketing", "Net Profit"],
+            "Amount": ["₹10,00,000", "₹4,00,000", "₹3,00,000", "₹1,00,000", "₹2,00,000"]
+        }))
+
+def service_return_analysis():
+    st.subheader("↩️ Return Analysis")
+    st.info("Analyze return reasons and rates.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("**Return Rate by Category**")
+        st.bar_chart({"Electronics": 5, "Fashion": 15, "Home": 8})
+    with col2:
+        st.write("**Top Return Reasons**")
+        st.write("1. Size Issue (40%)")
+        st.write("2. Defective Product (25%)")
+        st.write("3. Better Price Available (15%)")
+
+def service_inventory_planning():
+    st.subheader("📦 Inventory Planning")
+    
+    tab1, tab2 = st.tabs(["FBF (Flipkart)", "FBA (Amazon)"])
+    
+    with tab1:
+        st.markdown("### Fulfilled by Flipkart (FBF)")
+        st.info("Restock recommendations for Flipkart Fulfillment Centers.")
+        st.dataframe(pd.DataFrame({
+            "SKU": ["SKU-001", "SKU-005"],
+            "Current Stock": [12, 5],
+            "Recommended Send": [50, 100],
+            "Days of Cover": [5, 2]
+        }), use_container_width=True)
+        
+    with tab2:
+        st.markdown("### Fulfilled by Amazon (FBA)")
+        st.info("Restock recommendations for Amazon Fulfillment Centers.")
+        st.dataframe(pd.DataFrame({
+            "ASIN": ["B00123XY", "B00987AB"],
+            "FBA Stock": [150, 20],
+            "Inbound": [0, 50],
+            "Recommended Action": ["Hold", "Restock Urgent"]
+        }), use_container_width=True)
+
+# --- Service Modules: GST Filing ---
+
 def service_gst_filing(gst_type):
     st.subheader(f"🏛️ GST Filing: {gst_type}")
     
@@ -146,6 +247,26 @@ def service_gst_filing(gst_type):
                 "type": gst_type
             })
             st.success("JSON Generated ready for Portal Upload.")
+
+# --- Service Modules: Insights ---
+
+def service_business_health():
+    st.subheader("❤️ Business Health")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Account Health Score", "85/100", "+5")
+        st.progress(85)
+    with col2:
+        st.error("2 Policy Violations Detected")
+        st.success("0 IP Complaints")
+        st.info("98% VTR (Valid Tracking Rate)")
+
+def service_earning_summary():
+    st.subheader("💰 Earning Summary")
+    st.line_chart({"Jan": 50000, "Feb": 65000, "Mar": 55000, "Apr": 72000})
+    st.write("Projected Earnings for May: ₹80,000")
+
+# --- Service Modules: Productivity ---
 
 def service_task_tracker():
     st.subheader("✅ Task Tracker")
@@ -185,51 +306,45 @@ def main():
     # Sidebar Navigation Logic
     # We use expanders to simulate collapsible categories
     
-    # Selection holder
-    selected_option = None
-    
-    # 1. E-COMMERCE SECTION
-    with st.sidebar.expander("📦 E-commerce Solutions", expanded=True):
-        st.markdown("**Listing Optimization**")
-        opt_choice = st.radio("Select Tool:", 
-                              ["Keyword Extractor", "Image Optimizer"], 
-                              label_visibility="collapsed",
-                              index=None,
-                              key="nav_opt")
-        
-        if opt_choice:
-            selected_option = opt_choice
-
-        st.markdown("---")
-        st.markdown("**Creation Tools**")
-        if st.sidebar.button("Listing Maker", use_container_width=True):
-             selected_option = "Listing Maker"
-
-        st.markdown("---")
-        st.markdown("**Reporting**")
-        if st.sidebar.button("Reconciliation", use_container_width=True):
-            selected_option = "Reconciliation"
-
-        st.markdown("---")
-        st.markdown("**GST Filing**")
-        gst_choice = st.selectbox("Select Return Type:", 
-                                  ["Select...", "GSTR-1", "GSTR-2A/2B", "GSTR-3B"], 
-                                  key="nav_gst")
-        if gst_choice != "Select...":
-            selected_option = gst_choice
-
-    # 2. TASK TRACKER SECTION
-    with st.sidebar.expander("📝 Productivity", expanded=False):
-        if st.button("Task Tracker", use_container_width=True):
-            selected_option = "Task Tracker"
-
-    # Default Page
+    # Initialize session state for page if not exists
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "Dashboard"
 
-    # Update session state based on interactions
-    if selected_option:
-        st.session_state.current_page = selected_option
+    # 1. CATALOGING
+    with st.sidebar.expander("📂 Cataloging", expanded=True):
+        if st.button("Listing Maker", use_container_width=True): st.session_state.current_page = "Listing Maker"
+        if st.button("Keyword Extractor", use_container_width=True): st.session_state.current_page = "Keyword Extractor"
+        if st.button("Image Optimizer", use_container_width=True): st.session_state.current_page = "Image Optimizer"
+        if st.button("Listing Optimizer", use_container_width=True): st.session_state.current_page = "Listing Optimizer"
+
+    # 2. PRICING TOOL
+    with st.sidebar.expander("💲 Pricing Tool"):
+        if st.button("Rate Card", use_container_width=True): st.session_state.current_page = "Rate Card"
+        if st.button("Pricing Update", use_container_width=True): st.session_state.current_page = "Pricing Update"
+
+    # 3. REPORTING
+    with st.sidebar.expander("📊 Reporting"):
+        if st.button("Payment Reconciliation", use_container_width=True): st.session_state.current_page = "Payment Reconciliation"
+        if st.button("Advertisement Analysis", use_container_width=True): st.session_state.current_page = "Advertisement Analysis"
+        if st.button("P&L", use_container_width=True): st.session_state.current_page = "P&L"
+        if st.button("Return", use_container_width=True): st.session_state.current_page = "Return"
+        if st.button("Inventory Planning", use_container_width=True): st.session_state.current_page = "Inventory Planning"
+
+    # 4. GST FILING
+    with st.sidebar.expander("🏛️ GST Filing"):
+        if st.button("GSTR-1", use_container_width=True): st.session_state.current_page = "GSTR-1"
+        if st.button("GSTR 2A/2B", use_container_width=True): st.session_state.current_page = "GSTR 2A/2B"
+        if st.button("GSTR 3B", use_container_width=True): st.session_state.current_page = "GSTR 3B"
+
+    # 5. INSIGHTS
+    with st.sidebar.expander("📈 Insights"):
+        if st.button("Business Health", use_container_width=True): st.session_state.current_page = "Business Health"
+        if st.button("Earning Summary", use_container_width=True): st.session_state.current_page = "Earning Summary"
+        
+    # 6. PRODUCTIVITY (Task Tracker)
+    with st.sidebar.expander("📝 Productivity"):
+         if st.button("Task Tracker", use_container_width=True): st.session_state.current_page = "Task Tracker"
+
 
     # --- Router Logic (Displaying the selected page) ---
     
@@ -238,30 +353,37 @@ def main():
     if page == "Dashboard":
         st.title("Welcome to Ecartologist Admin")
         st.write("Select a service from the sidebar to begin.")
-        
-        # Dashboard metrics example
         col1, col2, col3 = st.columns(3)
         col1.metric("Pending Orders", "124", "4%")
         col2.metric("Listings Optimized", "45", "-2%")
         col3.metric("Pending GST", "GSTR-3B", "Due in 2 days")
 
-    elif page == "Keyword Extractor":
-        service_keyword_extractor()
+    # Cataloging
+    elif page == "Listing Maker": service_listing_maker()
+    elif page == "Keyword Extractor": service_keyword_extractor()
+    elif page == "Image Optimizer": service_image_optimizer()
+    elif page == "Listing Optimizer": service_listing_optimizer()
     
-    elif page == "Image Optimizer":
-        service_image_optimizer()
-        
-    elif page == "Listing Maker":
-        service_listing_maker()
-        
-    elif page == "Reconciliation":
-        service_reconciliation()
-        
-    elif page in ["GSTR-1", "GSTR-2A/2B", "GSTR-3B"]:
-        service_gst_filing(page)
-        
-    elif page == "Task Tracker":
-        service_task_tracker()
+    # Pricing
+    elif page == "Rate Card": service_rate_card()
+    elif page == "Pricing Update": service_pricing_update()
+    
+    # Reporting
+    elif page == "Payment Reconciliation": service_payment_reconciliation()
+    elif page == "Advertisement Analysis": service_advertisement_analysis()
+    elif page == "P&L": service_pnl()
+    elif page == "Return": service_return_analysis()
+    elif page == "Inventory Planning": service_inventory_planning()
+    
+    # GST
+    elif page in ["GSTR-1", "GSTR 2A/2B", "GSTR 3B"]: service_gst_filing(page)
+    
+    # Insights
+    elif page == "Business Health": service_business_health()
+    elif page == "Earning Summary": service_earning_summary()
+    
+    # Productivity
+    elif page == "Task Tracker": service_task_tracker()
 
 if __name__ == "__main__":
     main()
