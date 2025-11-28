@@ -33,7 +33,7 @@ def simulate_processing():
 # --- Data Simulation Functions (To run the demo without real files) ---
 
 def create_mock_sales_df():
-    """Simulates sales data with 'Column F (SKU)' and 'Units Sold' as default headers."""
+    """Simulates sales data with 'Column F (SKU)', 'Units Sold', and 'Warehouse' as default headers."""
     prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
     slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
     
@@ -109,7 +109,7 @@ def service_inventory_planning():
     
     with tab1:
         st.markdown("### Fulfilled by Flipkart (FBF) Inventory & FSN Planner")
-        st.info("Upload your inventory and sales data. You must select the correct SKU and Demand columns after upload.")
+        st.info("Upload your inventory and sales data. You must select the correct SKU, Demand, and Warehouse columns after upload.")
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
@@ -158,7 +158,7 @@ def service_inventory_planning():
                 key="sales_sku_col_select"
             )
             
-            # --- NEW SELECTBOX FOR UNITS SOLD / DEMAND COLUMN ---
+            # --- SELECTBOX FOR UNITS SOLD / DEMAND COLUMN ---
             default_demand_index = sales_cols.index('Units Sold') if 'Units Sold' in sales_cols else (sales_cols.index(sales_sku_col) + 1 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 1 else 0)
 
             demand_col = st.selectbox(
@@ -166,6 +166,16 @@ def service_inventory_planning():
                 sales_cols, 
                 index=default_demand_index,
                 key="sales_demand_col_select"
+            )
+
+            # --- NEW SELECTBOX FOR WAREHOUSE / LOCATION COLUMN ---
+            default_warehouse_index = sales_cols.index('Warehouse') if 'Warehouse' in sales_cols else (sales_cols.index(sales_sku_col) + 2 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 2 else 0)
+
+            warehouse_col = st.selectbox(
+                "Select Warehouse/Location Column (Sales)",
+                sales_cols,
+                index=default_warehouse_index,
+                key="sales_warehouse_col_select"
             )
 
 
@@ -180,12 +190,16 @@ def service_inventory_planning():
 
                 # Data Cleaning: Use the dynamically selected column for cleaning
                 try:
+                    # Clean SKUs
                     sales_df['SKU_Clean'] = clean_sku(sales_df[sales_sku_col])
                     inventory_df['SKU_Clean'] = clean_sku(inventory_df[inv_sku_col])
                     
-                    # Ensure the demand column is numeric and rename it for consistency later
+                    # Convert Demand column to numeric and standardize name
                     sales_df[demand_col] = pd.to_numeric(sales_df[demand_col], errors='coerce').fillna(0)
                     sales_df.rename(columns={demand_col: 'Demand (30D)'}, inplace=True)
+                    
+                    # Standardize the Warehouse column name for consistent grouping
+                    sales_df.rename(columns={warehouse_col: 'Warehouse'}, inplace=True)
                     
                 except KeyError as e:
                     st.error(f"Critical Error: The selected column '{e.args[0]}' was not found in one of the dataframes. Please re-upload the file or ensure the correct column is selected.")
@@ -235,7 +249,7 @@ def service_inventory_planning():
                 st.subheader("3. FSN-Wise Demand in Warehouses (Top 20 SKU/Warehouse Combinations)")
                 
                 # Calculate aggregated demand volume per SKU-Warehouse combination
-                # Now uses the common 'Demand (30D)' column created earlier
+                # 'Warehouse' is now guaranteed to be the column name due to renaming above
                 warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Demand (30D)'].sum().reset_index()
                 
                 # Merge with inventory for stock visibility
