@@ -54,8 +54,8 @@ def create_mock_sales_df():
     }
     
     df = pd.DataFrame(data)
-    # Simulate Column E being the SKU column
-    df.rename(columns={'SKU_Dirty': 'Column E (SKU)'}, inplace=True) 
+    # Simulate Column F being the SKU column (Updated based on user request)
+    df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True) 
     return df
 
 def create_mock_inventory_df():
@@ -76,8 +76,8 @@ def create_mock_inventory_df():
         'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2]
     }
     df = pd.DataFrame(data)
-    # Simulate Column E being the SKU column
-    df.rename(columns={'SKU_Dirty': 'Column E (SKU)'}, inplace=True)
+    # Simulate Column F being the SKU column (Updated based on user request)
+    df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True)
     return df
 
 def clean_sku(sku_series):
@@ -124,7 +124,8 @@ def service_inventory_planning():
     
     with tab1:
         st.markdown("### Fulfilled by Flipkart (FBF) Inventory & FSN Planner")
-        st.info("Upload your inventory and sales data to classify SKUs by movement (Fast, Slow, Non-moving) and generate demand forecasts.")
+        # Updated info message to reflect Column F
+        st.info("Upload your inventory and sales data to classify SKUs by movement (Fast, Slow, Non-moving) and generate demand forecasts. Ensure SKU is in Column F.")
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
@@ -134,7 +135,8 @@ def service_inventory_planning():
             st.session_state['fbf_inventory_data'] = create_mock_inventory_df()
         
         with col_fbf1:
-            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV) - Column E is SKU", type=['csv'], key="fbf_inventory")
+            # Updated file uploader description
+            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV) - Column F is SKU", type=['csv'], key="fbf_inventory")
             if inventory_file:
                 try:
                     st.session_state['fbf_inventory_data'] = pd.read_csv(inventory_file)
@@ -145,7 +147,8 @@ def service_inventory_planning():
             st.session_state['fbf_sales_data'] = create_mock_sales_df()
 
         with col_fbf2:
-            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV) - Column E is SKU", type=['csv'], key="fbf_sales")
+            # Updated file uploader description
+            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV) - Column F is SKU", type=['csv'], key="fbf_sales")
             if sales_file:
                 try:
                     st.session_state['fbf_sales_data'] = pd.read_csv(sales_file)
@@ -161,10 +164,10 @@ def service_inventory_planning():
                 sales_df = st.session_state['fbf_sales_data'].copy()
                 inventory_df = st.session_state['fbf_inventory_data'].copy()
 
-                # Assuming 'Column E (SKU)' is the SKU column in both uploaded sheets
-                sku_col = 'Column E (SKU)'
+                # Set SKU column to 'Column F (SKU)' as requested by user
+                sku_col = 'Column F (SKU)'
 
-                # Data Cleaning: Remove " and SKU: from Column E
+                # Data Cleaning: Remove " and SKU: from Column F
                 sales_df['SKU_Clean'] = clean_sku(sales_df[sku_col])
                 inventory_df['SKU_Clean'] = clean_sku(inventory_df[sku_col])
                 
