@@ -33,20 +33,18 @@ def simulate_processing():
 # --- Data Simulation Functions (To run the demo without real files) ---
 
 def create_mock_sales_df():
-    """Simulates sales data with 'Column F (SKU)' as the header."""
+    """Simulates sales data with 'Column F (SKU)' and 'Units Sold' as default headers."""
     prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
     slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
     
     data = {
-        'SKU_Dirty': prod_skus * 2 + slow_skus, # Length 25
+        'Column F (SKU)': prod_skus * 2 + slow_skus, # Length 25
         'Units Sold': [500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10, 50, 40, 30, 20, 10, 5, 4, 3, 2, 1],
         'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA'],
         'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA']
     }
     
     df = pd.DataFrame(data)
-    # Use the hardcoded name for mock data initialization
-    df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True) 
     df['Column E (FSN Ref)'] = 'FSN_Ref_Data' # Add an E column for context
     return df
 
@@ -56,13 +54,11 @@ def create_mock_inventory_df():
     slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
     
     data = {
-        'SKU_Dirty': prod_skus + slow_skus,
+        'Column F (SKU)': prod_skus + slow_skus,
         'Warehouse': ['BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL'],
         'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2]
     }
     df = pd.DataFrame(data)
-    # Use the hardcoded name for mock data initialization
-    df.rename(columns={'SKU_Dirty': 'Column F (SKU)'}, inplace=True)
     df['Column G (Other Data)'] = 'Other_Inventory_Data' 
     return df
 
@@ -73,11 +69,13 @@ def clean_sku(sku_series):
         return sku_series.astype(str).str.replace(r'"|SKU:', '', regex=True).str.strip()
     return sku_series # Return original if not string
 
-def calculate_fsn(sales_df):
+# The calculate_fsn function now accepts the name of the demand column
+def calculate_fsn(sales_df, demand_col_name):
     """Calculates FSN status based on 70/20/10 sales volume split (ABC analysis principle)."""
     
-    # 1. Calculate total sales per SKU
-    sku_sales = sales_df.groupby('SKU_Clean')['Units Sold'].sum().reset_index()
+    # 1. Calculate total sales per SKU - NOW USES demand_col_name
+    sku_sales = sales_df.groupby('SKU_Clean')[demand_col_name].sum().reset_index()
+    sku_sales.rename(columns={demand_col_name: 'Units Sold'}, inplace=True)
     sku_sales = sku_sales.sort_values(by='Units Sold', ascending=False).reset_index(drop=True)
     
     # 2. Calculate cumulative percentage
@@ -102,7 +100,7 @@ def calculate_fsn(sales_df):
     
     return sku_sales[['SKU_Clean', 'Units Sold', 'FSN Status']]
 
-# --- Service Modules: Inventory Planning (Updated to use Selectbox for SKU Column) ---
+# --- Service Modules: Inventory Planning (Updated to use Selectbox for Units Sold Column) ---
 
 def service_inventory_planning():
     st.subheader("📦 Inventory Planning")
@@ -111,7 +109,7 @@ def service_inventory_planning():
     
     with tab1:
         st.markdown("### Fulfilled by Flipkart (FBF) Inventory & FSN Planner")
-        st.info("Upload your inventory and sales data. You must select the correct SKU column from the dropdowns after upload.")
+        st.info("Upload your inventory and sales data. You must select the correct SKU and Demand columns after upload.")
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
@@ -151,14 +149,25 @@ def service_inventory_planning():
                     st.error(f"Error reading sales file: {e}")
 
             sales_cols = st.session_state['fbf_sales_data'].columns.tolist()
-            default_sales_index = sales_cols.index('Column F (SKU)') if 'Column F (SKU)' in sales_cols else 0
+            default_sales_sku_index = sales_cols.index('Column F (SKU)') if 'Column F (SKU)' in sales_cols else 0
             
             sales_sku_col = st.selectbox(
                 "Select SKU Column (Sales)", 
                 sales_cols, 
-                index=default_sales_index,
+                index=default_sales_sku_index,
                 key="sales_sku_col_select"
             )
+            
+            # --- NEW SELECTBOX FOR UNITS SOLD / DEMAND COLUMN ---
+            default_demand_index = sales_cols.index('Units Sold') if 'Units Sold' in sales_cols else (sales_cols.index(sales_sku_col) + 1 if sales_sku_col in sales_cols and len(sales_cols) > sales_cols.index(sales_sku_col) + 1 else 0)
+
+            demand_col = st.selectbox(
+                "Select Units Sold / Demand Column (Sales)", 
+                sales_cols, 
+                index=default_demand_index,
+                key="sales_demand_col_select"
+            )
+
 
         if st.button("Generate FSN & Inventory Analysis", key="analyze_fbf"):
             
@@ -170,20 +179,25 @@ def service_inventory_planning():
                 inventory_df = st.session_state['fbf_inventory_data'].copy()
 
                 # Data Cleaning: Use the dynamically selected column for cleaning
-                # This resolves the KeyError you were encountering.
                 try:
                     sales_df['SKU_Clean'] = clean_sku(sales_df[sales_sku_col])
                     inventory_df['SKU_Clean'] = clean_sku(inventory_df[inv_sku_col])
+                    
+                    # Ensure the demand column is numeric and rename it for consistency later
+                    sales_df[demand_col] = pd.to_numeric(sales_df[demand_col], errors='coerce').fillna(0)
+                    sales_df.rename(columns={demand_col: 'Demand (30D)'}, inplace=True)
+                    
                 except KeyError as e:
-                    st.error(f"Critical Error: The selected SKU column '{e.args[0]}' was not found in one of the dataframes. Please re-upload the file or ensure the correct column is selected.")
+                    st.error(f"Critical Error: The selected column '{e.args[0]}' was not found in one of the dataframes. Please re-upload the file or ensure the correct column is selected.")
                     return # Stop execution if a core column is missing
+                except Exception as e:
+                    st.error(f"Error during data processing (e.g., converting Demand column to numbers): {e}")
+                    return
 
                 
-                sales_df.rename(columns={'Units Sold': 'Demand (30D)'}, inplace=True)
-
-
                 # 2. FSN CLASSIFICATION
-                fsn_status_df = calculate_fsn(sales_df)
+                # Pass the original name of the column containing demand data
+                fsn_status_df = calculate_fsn(sales_df, 'Demand (30D)')
 
                 # Merge FSN status back into Sales and Inventory DFs
                 sales_df = sales_df.merge(fsn_status_df[['SKU_Clean', 'FSN Status']], on='SKU_Clean', how='left')
@@ -221,6 +235,7 @@ def service_inventory_planning():
                 st.subheader("3. FSN-Wise Demand in Warehouses (Top 20 SKU/Warehouse Combinations)")
                 
                 # Calculate aggregated demand volume per SKU-Warehouse combination
+                # Now uses the common 'Demand (30D)' column created earlier
                 warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Demand (30D)'].sum().reset_index()
                 
                 # Merge with inventory for stock visibility
