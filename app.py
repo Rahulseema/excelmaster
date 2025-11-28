@@ -33,24 +33,47 @@ def simulate_processing():
 # --- Data Simulation Functions (To run the demo without real files) ---
 
 def create_mock_sales_df():
-    """Simulates sales data with dirty SKUs, units, state, and warehouse."""
+    """
+    Simulates sales data (25 total entries) with dirty SKUs.
+    SKU length is fixed to 25 to match other columns.
+    10 fast-moving SKUs (PROD) repeated, 5 slow SKUs (SLOW). Total unique SKUs: 15.
+    """
+    
+    # 10 fast SKUs repeated twice (20 items) + 5 slow SKUs (5 items) = 25 items
+    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] 
+    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)]
+    
     data = {
-        'SKU_Dirty': [f'"SKU:PROD{i:03}"' for i in range(1, 16)] * 2 + [f'"SKU:SLOW{i:03}"' for i in range(1, 6)],
+        'SKU_Dirty': prod_skus * 2 + slow_skus, # Length 25
+        # 25 manually entered sales figures
         'Units Sold': [500, 450, 300, 250, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 10, 50, 40, 30, 20, 10, 5, 4, 3, 2, 1],
-        'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL'] * 1 + ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA'],
-        'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL'] * 1 + ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR']
+        # 25 state entries
+        'State': ['MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA', 'DL', 'TN', 'MH', 'KA'],
+        # 25 warehouse entries
+        'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA']
     }
+    
     df = pd.DataFrame(data)
     # Simulate Column E being the SKU column
     df.rename(columns={'SKU_Dirty': 'Column E (SKU)'}, inplace=True) 
     return df
 
 def create_mock_inventory_df():
-    """Simulates inventory data with dirty SKUs and stock."""
+    """
+    Simulates inventory data for the 15 unique SKUs used in the sales file.
+    Total entries: 15.
+    """
+    
+    prod_skus = [f'"SKU:PROD{i:03}"' for i in range(1, 11)] # 10 SKUs
+    slow_skus = [f'"SKU:SLOW{i:03}"' for i in range(1, 6)] # 5 SKUs
+    
     data = {
-        'SKU_Dirty': [f'"SKU:PROD{i:03}"' for i in range(1, 16)] + [f'"SKU:SLOW{i:03}"' for i in range(1, 6)],
-        'Warehouse': ['BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR'],
-        'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2, 10, 8, 6, 4, 2]
+        # 15 unique SKUs
+        'SKU_Dirty': prod_skus + slow_skus,
+        # 15 warehouse entries
+        'Warehouse': ['BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL', 'MAA', 'BLR', 'BLR', 'DEL', 'MAA', 'BLR', 'DEL'],
+        # 15 stock entries
+        'Current Stock': [1000, 800, 500, 400, 300, 200, 150, 100, 50, 40, 30, 20, 10, 5, 2]
     }
     df = pd.DataFrame(data)
     # Simulate Column E being the SKU column
@@ -64,7 +87,7 @@ def clean_sku(sku_series):
     return sku_series # Return original if not string
 
 def calculate_fsn(sales_df):
-    """Calculates FSN status based on 70/20/10 sales volume split."""
+    """Calculates FSN status based on 70/20/10 sales volume split (ABC analysis principle)."""
     
     # 1. Calculate total sales per SKU
     sku_sales = sales_df.groupby('SKU_Clean')['Units Sold'].sum().reset_index()
@@ -105,26 +128,35 @@ def service_inventory_planning():
 
         # File Uploads (Uses mock data if files are not uploaded)
         col_fbf1, col_fbf2 = st.columns(2)
+        
+        # Initialize with mock data if not set, or load uploaded file
+        if 'fbf_inventory_data' not in st.session_state:
+            st.session_state['fbf_inventory_data'] = create_mock_inventory_df()
+        
         with col_fbf1:
-            # We use `fbf_inventory_data` variable to hold the DataFrame
-            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV)", type=['csv'], key="fbf_inventory")
+            inventory_file = st.file_uploader("1. Current Warehouse Inventory (CSV) - Column E is SKU", type=['csv'], key="fbf_inventory")
             if inventory_file:
-                st.session_state['fbf_inventory_data'] = pd.read_csv(inventory_file)
-            elif 'fbf_inventory_data' not in st.session_state:
-                st.session_state['fbf_inventory_data'] = create_mock_inventory_df()
+                try:
+                    st.session_state['fbf_inventory_data'] = pd.read_csv(inventory_file)
+                except Exception as e:
+                    st.error(f"Error reading inventory file: {e}")
+
+        if 'fbf_sales_data' not in st.session_state:
+            st.session_state['fbf_sales_data'] = create_mock_sales_df()
 
         with col_fbf2:
-            # We use `fbf_sales_data` variable to hold the DataFrame
-            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV)", type=['csv'], key="fbf_sales")
+            sales_file = st.file_uploader("2. Demand in last 30 days (Sales File - CSV) - Column E is SKU", type=['csv'], key="fbf_sales")
             if sales_file:
-                st.session_state['fbf_sales_data'] = pd.read_csv(sales_file)
-            elif 'fbf_sales_data' not in st.session_state:
-                st.session_state['fbf_sales_data'] = create_mock_sales_df()
+                try:
+                    st.session_state['fbf_sales_data'] = pd.read_csv(sales_file)
+                except Exception as e:
+                    st.error(f"Error reading sales file: {e}")
 
         if st.button("Generate FSN & Inventory Analysis", key="analyze_fbf"):
             
             # --- START FSN ANALYSIS ---
             if 'fbf_inventory_data' in st.session_state and 'fbf_sales_data' in st.session_state:
+                
                 # 1. CLEANING AND PREPARATION
                 sales_df = st.session_state['fbf_sales_data'].copy()
                 inventory_df = st.session_state['fbf_inventory_data'].copy()
@@ -136,8 +168,7 @@ def service_inventory_planning():
                 sales_df['SKU_Clean'] = clean_sku(sales_df[sku_col])
                 inventory_df['SKU_Clean'] = clean_sku(inventory_df[sku_col])
                 
-                # We rename the column temporarily for easier merging below
-                sales_df.rename(columns={'Units Sold': 'Units Sold'}, inplace=True)
+                sales_df.rename(columns={'Units Sold': 'Demand (30D)'}, inplace=True)
 
 
                 # 2. FSN CLASSIFICATION
@@ -145,43 +176,47 @@ def service_inventory_planning():
 
                 # Merge FSN status back into Sales and Inventory DFs
                 sales_df = sales_df.merge(fsn_status_df[['SKU_Clean', 'FSN Status']], on='SKU_Clean', how='left')
-                inventory_df = inventory_df.merge(fsn_status_df[['SKU_Clean', 'FSN Status', 'Units Sold']], on='SKU_Clean', how='left')
                 
-                # Fill missing FSN (for items in inventory but not sold)
+                # Prepare Inventory DF for merging (needed to get 'Units Sold' (Demand) for non-movers)
+                inv_sku_demand = fsn_status_df[['SKU_Clean', 'Units Sold', 'FSN Status']].rename(columns={'Units Sold': 'Total Demand (30D)'})
+                inventory_df = inventory_df.merge(inv_sku_demand, on='SKU_Clean', how='left')
+                
+                # Fill missing FSN (for items in inventory but not sold in last 30 days)
                 inventory_df['FSN Status'].fillna('N (Non-Moving)', inplace=True)
-                inventory_df['Units Sold'].fillna(0, inplace=True)
+                inventory_df['Total Demand (30D)'].fillna(0, inplace=True)
                 
                 # --- REPORT GENERATION ---
+                simulate_processing()
                 st.markdown("---")
-                st.success("FSN Classification and Inventory Mapping Complete.")
+                st.success("FSN Classification and Inventory Mapping Complete. Displaying FSN Reports based on cleaned SKUs.")
                 
                 
                 # Report 1: Best 10 FSN SKUs (Top 10 Fast Movers by Volume)
-                st.subheader("1. Best 10 FSN SKUs (Fastest Movers)")
+                st.subheader("1. Best 10 FSN SKUs (Fastest Movers by Sales Volume)")
                 best_10_fsn = fsn_status_df[fsn_status_df['FSN Status'].str.startswith('F')].head(10).reset_index(drop=True)
-                best_10_fsn.columns = ['SKU Name', 'Units Sold (30D)', 'FSN Status']
+                best_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
                 st.dataframe(best_10_fsn, use_container_width=True)
 
 
-                # Report 2: Least 10 FSN SKUs (Lowest Selling Non-Movers)
+                # Report 2: Least 10 FSN SKUs (Slowest Selling Non-Movers)
                 st.subheader("2. Least 10 FSN SKUs (Non-Moving / Slowest Sellers)")
-                # Show Non-Moving items, sorted by lowest sales volume (or current stock for pure non-movers)
+                # Show Non-Moving items, sorted by lowest sales volume
                 worst_10_fsn = fsn_status_df.sort_values(by='Units Sold', ascending=True).head(10).reset_index(drop=True)
-                worst_10_fsn.columns = ['SKU Name', 'Units Sold (30D)', 'FSN Status']
+                worst_10_fsn.columns = ['SKU Name', 'Total Demand (30D)', 'FSN Status']
                 st.dataframe(worst_10_fsn, use_container_width=True)
 
 
                 # Report 3: FSN-wise demand in warehouses (Top 20 table)
                 st.subheader("3. FSN-Wise Demand in Warehouses (Top 20 SKU/Warehouse Combinations)")
                 
-                # Calculate sales volume per SKU-Warehouse-FSN combination
-                warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Units Sold'].sum().reset_index()
+                # Calculate aggregated demand volume per SKU-Warehouse combination
+                warehouse_demand = sales_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Demand (30D)'].sum().reset_index()
                 
-                # Combine inventory and demand for stock visibility
-                inventory_combined = inventory_df.groupby(['SKU_Clean', 'Warehouse', 'FSN Status'])['Current Stock'].sum().reset_index()
+                # Merge with inventory for stock visibility
+                inventory_stock = inventory_df.groupby(['SKU_Clean', 'Warehouse'])['Current Stock'].sum().reset_index()
                 
-                demand_report = warehouse_demand.merge(inventory_combined, on=['SKU_Clean', 'Warehouse', 'FSN Status'], how='left')
-                demand_report.rename(columns={'SKU_Clean': 'SKU Name', 'Units Sold': 'Demand (30D)', 'Current Stock': 'Available Stock'}, inplace=True)
+                demand_report = warehouse_demand.merge(inventory_stock, on=['SKU_Clean', 'Warehouse'], how='left')
+                demand_report.rename(columns={'SKU_Clean': 'SKU Name', 'Demand (30D)': 'Demand (30D)', 'Current Stock': 'Available Stock'}, inplace=True)
                 
                 demand_report.sort_values(by='Demand (30D)', ascending=False, inplace=True)
                 
@@ -191,14 +226,18 @@ def service_inventory_planning():
                 st.warning("Please upload both the Current Warehouse Inventory and Sales files to run the FSN analysis.")
 
 
-    with st.expander("Cataloging, Pricing, Reporting, GST, Insights, Productivity"):
-        # The existing functions for other pages are here.
-        # This keeps the main structure clean.
-        pass
-        
-    # Other service modules are defined below this function as before.
+    with tab2:
+        st.markdown("### Fulfilled by Amazon (FBA)")
+        st.info("Restock recommendations for Amazon Fulfillment Centers.")
+        st.dataframe(pd.DataFrame({
+            "ASIN": ["B00123XY", "B00987AB"],
+            "FBA Stock": [150, 20],
+            "Inbound": [0, 50],
+            "Recommended Action": ["Hold", "Restock Urgent"]
+        }), use_container_width=True)
 
-# --- Service Modules (Non-Inventory) ---
+
+# --- Service Modules (Non-Inventory, truncated for brevity) ---
 
 def service_listing_maker():
     st.subheader("📝 Listing Maker")
