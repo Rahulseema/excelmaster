@@ -28,20 +28,21 @@ CHANNELS = [
 ]
 
 # --- THEME COLORS ---
-VIBRANT_BLUE_ACCENT = "#4e73df"
+VIBRANT_BLUE_ACCENT = "#4e73df" # Used for general buttons/elements
 LIGHT_GRAY_BG = "#f5f8fb"
-DARK_TEXT = "#212529"
-DARK_SLATE_BLUE = "#263d57"
+DARK_TEXT_DEFAULT = "#000000"  # NEW: Black for default text
+RED_ACCENT = "#dc3545"         # NEW: Red for active/hover states
+DARK_SLATE_BLUE = "#263d57"    # Used for sub-tab active text
 
 
 # ==============================================================================
-# 2. UI/UX STYLING (KI-ADMIN INSPIRED HEADER THEME)
+# 2. UI/UX STYLING (KI-ADMIN INSPIRED HEADER THEME - BLACK & RED)
 # ==============================================================================
 
 def inject_header_css():
     """
-    Injects custom CSS to remove the sidebar and style the main tabs 
-    as a primary website header navigation.
+    Injects custom CSS to style the main tabs as a primary website header navigation 
+    with Black default text and Red active/hover states.
     """
     st.markdown(
         f"""
@@ -56,7 +57,7 @@ def inject_header_css():
         
         /* --- Global Colors & Text --- */
         :root, body, .stApp {{
-            color: {DARK_TEXT} !important; 
+            color: {DARK_TEXT_DEFAULT} !important; 
             background-color: {LIGHT_GRAY_BG}; 
         }}
         
@@ -73,26 +74,33 @@ def inject_header_css():
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:first-child div[data-testid="stTabs"] {{
             margin-bottom: 2rem;
             background-color: white; 
-            border-radius: 0; /* Remove rounded corners for full header effect */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08); /* Stronger shadow for separation */
+            border-radius: 0; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08); 
             padding-left: 0; 
             position: sticky;
             top: 0;
             z-index: 100;
         }}
         
-        /* Style for the main service tabs (Header tabs) */
+        /* Default Style for the main service tabs (Header tabs) */
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:first-child button[data-baseweb="tab"] {{
-            color: {DARK_TEXT} !important; 
+            color: {DARK_TEXT_DEFAULT} !important; /* DEFAULT: Black Text */
             font-size: 1.1rem;
             font-weight: 600;
-            padding: 15px 30px !important; /* Larger padding for header buttons */
+            padding: 15px 30px !important; 
             border-bottom: 3px solid transparent !important;
+            transition: color 0.2s, border-bottom 0.2s;
         }}
-        /* Active style for the main service tabs */
+        
+        /* Hover Style for the main service tabs */
+        div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:first-child button[data-baseweb="tab"]:hover {{
+            color: {RED_ACCENT} !important; /* HOVER: Red Text */
+        }}
+        
+        /* Active Style for the main service tabs */
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:first-child button[data-baseweb="tab"][aria-selected="true"] {{
-            color: {VIBRANT_BLUE_ACCENT} !important; 
-            border-bottom: 3px solid {VIBRANT_BLUE_ACCENT} !important; 
+            color: {RED_ACCENT} !important; /* ACTIVE: Red Text */
+            border-bottom: 3px solid {RED_ACCENT} !important; /* ACTIVE: Red Bottom Line */
         }}
 
 
@@ -101,29 +109,36 @@ def inject_header_css():
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:nth-child(2) div[data-testid="stTabs"] {{
             margin-top: 0.5rem;
             margin-bottom: 1.5rem;
-            background-color: #ffffff; /* Use pure white for sub-nav background */
+            background-color: #ffffff; 
             border: 1px solid #e3eaf3;
             border-radius: 6px;
-            box-shadow: none; /* Remove shadow to distinguish from header */
+            box-shadow: none; 
             padding-left: 1rem;
         }}
         
-        /* Style for the channel tabs (sub-tabs) */
+        /* Default Style for the channel tabs (sub-tabs) */
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:nth-child(2) button[data-baseweb="tab"] {{
             font-size: 1rem;
             padding: 8px 15px !important;
-            color: #555555 !important;
+            color: {DARK_TEXT_DEFAULT} !important; /* DEFAULT: Black Text */
+            transition: color 0.2s, border-bottom 0.2s;
         }}
-        /* Active style for the channel tabs (sub-tabs) */
+
+        /* Hover Style for sub-tabs */
+        div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:nth-child(2) button[data-baseweb="tab"]:hover {{
+            color: {RED_ACCENT} !important; /* HOVER: Red Text */
+        }}
+        
+        /* Active Style for the channel tabs (sub-tabs) */
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:nth-child(2) button[data-baseweb="tab"][aria-selected="true"] {{
-            color: {DARK_SLATE_BLUE} !important; /* Darker blue for sub-nav active text */
-            border-bottom: 3px solid {DARK_SLATE_BLUE} !important; 
+            color: {RED_ACCENT} !important; /* ACTIVE: Red Text */
+            border-bottom: 3px solid {RED_ACCENT} !important; /* ACTIVE: Red Bottom Line */
         }}
 
 
         /* --- Headers and Content Blocks --- */
         h1 {{
-            display: none; /* Hide the h1 title previously used for the service name */
+            display: none; 
         }}
         h2 {{
             color: {VIBRANT_BLUE_ACCENT}; 
@@ -229,16 +244,7 @@ def render_application_layout():
 
     # --- TOP-LEVEL HEADER (SERVICES) ---
     
-    # st.tabs returns a list of containers. We save the tabs for content rendering later.
     service_tabs = st.tabs(MAIN_SERVICES)
-    
-    # Loop through the service tabs to check which one is active.
-    # Note: Streamlit's st.tabs relies on the user selecting a tab to make its
-    # container "active" (i.e., display its content). We manually track the click
-    # to know which service is active.
-    
-    # We need a unique key for st.tabs if we want to programmatically control it, 
-    # but since st.tabs auto-manages the layout, we'll focus on rendering nested content.
     
     for i, service_name in enumerate(MAIN_SERVICES):
         with service_tabs[i]:
