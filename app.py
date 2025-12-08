@@ -6,60 +6,50 @@ from io import BytesIO
 # 1. CONFIGURATION SECTION (CRITICAL: ADJUST COLUMN NAMES HERE!)
 # ==============================================================================
 
-# Your 9 distinct Marketplace Channels
-ALL_MARKETPLACE_CHANNELS = [
-    "Meesho",
-    "Amazon",
-    "Flipkart",
-    "Myntra",
-    "Nykaa",
-    "Channel 6 (Placeholder)",
-    "Channel 7 (Placeholder)",
-    "Channel 8 (Placeholder)",
-    "Channel 9 (Placeholder)",
+# Your 10 Master Account Names (Must match account name used in Mapping File)
+MASTER_ACCOUNT_NAMES = [
+    "Drench", "Drench India", "Shine ArC", "Sparsh", "Sparsh SC",
+    "BnB industries", "Shopforher", "Ansh Ent.", "AV Enterprises", "UV Enterprises"
 ]
+
+# Selling Channels
+MULTI_ACCOUNT_CHANNELS = ["Meesho", "Amazon", "Flipkart", "Myntra"] # 10 accounts each
+SINGLE_ACCOUNT_CHANNELS = ["Nykaa", "JioMart", "Ajio", "Tatacliq"] # 1 account each (for now)
+
+ALL_CHANNELS = MULTI_ACCOUNT_CHANNELS + SINGLE_ACCOUNT_CHANNELS
 
 # Configuration for Pick List Column Names by Channel
 # !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
-# If a channel is not working, check the 'sku' and 'qty' values below.
 CHANNEL_COLUMNS_MAP = {
     "Meesho": {'sku': 'SKU ID', 'qty': 'Quantity'},
     "Amazon": {'sku': 'sku', 'qty': 'quantity-purchased'}, 
     "Flipkart": {'sku': 'Seller SKU ID', 'qty': 'quantity-purchased'},
     "Myntra": {'sku': 'Seller SKU', 'qty': 'Quantity'},
     "Nykaa": {'sku': 'Seller Code', 'qty': 'Inventory Qty'}, 
-    "Channel 6 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
-    "Channel 7 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
-    "Channel 8 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
-    "Channel 9 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
+    "JioMart": {'sku': 'Product SKU', 'qty': 'Order Qty'},
+    "Ajio": {'sku': 'Seller SKU', 'qty': 'Unit Qty'},
+    "Tatacliq": {'sku': 'Item Code', 'qty': 'Units'},
 }
 
-# Mapping file column names (as provided by user):
+# Mapping file column names (as provided):
 MAP_CHANNEL_SKU_COL = 'Channel SKU'
 MAP_D_SKU_COL = 'D SKU'
 MAP_ACCOUNT_COL = 'Account name'
 
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
-# --- Helper Function to Read File ---
-def read_uploaded_file(uploaded_file, channel_name):
+# --- Helper Functions ---
+
+def read_uploaded_file(uploaded_file, name):
     """Reads a file object into a Pandas DataFrame."""
     try:
-        # Pass the file object directly to Pandas functions
         if uploaded_file.name.lower().endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
+            return pd.read_csv(uploaded_file)
         elif uploaded_file.name.lower().endswith('.xlsx'):
-            df = pd.read_excel(uploaded_file, engine='openpyxl')
-        else:
-            st.error(f"Unsupported file type for {channel_name}.")
-            return None
-        
-        # Add metadata before returning
-        df['Channel'] = channel_name
-        return df
-        
+            return pd.read_excel(uploaded_file, engine='openpyxl')
+        return None
     except Exception as e:
-        st.error(f"Error reading file for **{channel_name}**: {type(e).__name__} - {e}")
+        st.error(f"Error reading file **{name}**: {type(e).__name__} - {e}")
         return None
 
 # ==============================================================================
@@ -67,95 +57,114 @@ def read_uploaded_file(uploaded_file, channel_name):
 # ==============================================================================
 
 def render_picklist_tab():
-    st.title("📦 Multi-Channel Master Pick List Compiler")
-    st.markdown("Upload reports for your 9 channels and consolidate into a single pick list using your **D SKU**.")
+    st.title("📦 44-File Multi-Channel Master Pick List Compiler")
+    st.markdown("Upload reports for **44 accounts/channels** and consolidate using your **D SKU**.")
     st.markdown("---")
 
-    # The first tab is for Consolidation/Mapping, the rest are for uploading.
-    tab_titles = ["Consolidate & Map"] + ALL_MARKETPLACE_CHANNELS
-    
-    # st.tabs creates the horizontal tabs interface
+    # Tabs for each channel plus a consolidation tab
+    tab_titles = ["Consolidate & Map"] + ALL_CHANNELS
     tabs = st.tabs(tab_titles)
     
-    # Dictionary to store all uploaded DataFrames
-    all_raw_dataframes = {}
+    # Session state to manage uploaded DataFrames across tabs
+    if 'raw_dataframes' not in st.session_state:
+        st.session_state.raw_dataframes = {}
 
-    # --- UPLOADING TABS ---
-    for i, channel_name in enumerate(ALL_MARKETPLACE_CHANNELS):
+    # --- UPLOADING TABS (The 8 Channels) ---
+    for i, channel_name in enumerate(ALL_CHANNELS):
         with tabs[i + 1]: # Start from the second tab (index 1)
-            st.subheader(f"Upload Pick List for **{channel_name}**")
+            st.header(f"Upload Pick Lists for **{channel_name}**")
             
-            # Show the expected columns for clarity
-            config = CHANNEL_COLUMNS_MAP.get(channel_name, {'sku': 'N/A', 'qty': 'N/A'})
-            st.info(f"Expected SKU Column: `{config['sku']}` | Expected Quantity Column: `{config['qty']}`")
-            
-            uploaded_file = st.file_uploader(
-                f"Upload {channel_name} Pick List (CSV/Excel)",
-                type=ALLOWED_FILE_TYPES,
-                key=f"file_uploader_{channel_name.replace(' ', '_')}"
-            )
+            config = CHANNEL_COLUMNS_MAP.get(channel_name)
+            st.info(f"Expected SKU Col: `{config['sku']}` | Expected Qty Col: `{config['qty']}`")
 
-            if uploaded_file:
-                df = read_uploaded_file(uploaded_file, channel_name)
-                if df is not None:
-                    all_raw_dataframes[channel_name] = df
-                    st.success(f"File for {channel_name} uploaded successfully!")
-                    
+            # Determine which account names to use for this channel
+            if channel_name in MULTI_ACCOUNT_CHANNELS:
+                accounts_to_upload = MASTER_ACCOUNT_NAMES
+                cols = st.columns(3) # Use columns for space efficiency
+            else:
+                # Use a single, generic account name for single-account channels
+                accounts_to_upload = [f"{channel_name} - Main"] 
+                cols = [st.container()] # Use a single container for full width
+
+            # Generate uploaders based on account list
+            for j, account_name in enumerate(accounts_to_upload):
+                unique_key = f"{channel_name}_{account_name.replace(' ', '_')}"
+                
+                with cols[j % len(cols)]:
+                    uploaded_file = st.file_uploader(
+                        f"**{account_name}** Pick List",
+                        type=ALLOWED_FILE_TYPES,
+                        key=unique_key
+                    )
+
+                    if uploaded_file:
+                        # Store the file object in session state keyed by (channel, account)
+                        st.session_state.raw_dataframes[unique_key] = {
+                            'file': uploaded_file,
+                            'channel': channel_name,
+                            'account': account_name
+                        }
+                        
     # --- CONSOLIDATE & MAP TAB (The Main Processing Logic) ---
     with tabs[0]:
-        st.subheader("1️⃣ Master SKU Mapping File")
+        st.subheader("1️⃣ Master SKU Mapping File Upload")
         mapping_file = st.file_uploader(
             f"Upload Master Mapping File ({MAP_CHANNEL_SKU_COL} | {MAP_D_SKU_COL} | {MAP_ACCOUNT_COL})",
             type=ALLOWED_FILE_TYPES,
             key="file_uploader_mapping"
         )
         st.markdown("---")
-        
-        # Check if all files needed are present
-        uploaded_channel_count = len(all_raw_dataframes)
-        required_channel_count = len(ALL_MARKETPLACE_CHANNELS)
 
-        if uploaded_channel_count == required_channel_count and mapping_file:
-            st.success(f"All {required_channel_count} channel files and mapping file uploaded. Starting compilation...")
+        # Define expected total uploads
+        total_multi_uploads = len(MULTI_ACCOUNT_CHANNELS) * len(MASTER_ACCOUNT_NAMES)
+        total_single_uploads = len(SINGLE_ACCOUNT_CHANNELS)
+        REQUIRED_FILE_COUNT = total_multi_uploads + total_single_uploads
+
+        uploaded_count = len(st.session_state.raw_dataframes)
+        
+        st.subheader("2️⃣ Consolidation Status")
+        st.metric(label="Files Uploaded (Pick Lists)", value=uploaded_count, delta=f"Required: {REQUIRED_FILE_COUNT}")
+        
+        if uploaded_count == REQUIRED_FILE_COUNT and mapping_file:
+            st.success("All required pick lists and mapping file are uploaded. Starting compilation...")
             
             # Read Mapping File
             mapping_df = read_uploaded_file(mapping_file, "Mapping File")
-            if mapping_df is None:
-                 st.error("Failed to read mapping file.")
-                 return
+            if mapping_df is None: return
 
             processed_data = []
             
             # 1. Process and Clean all Channel DataFrames
-            for channel_name, df in all_raw_dataframes.items():
-                config = CHANNEL_COLUMNS_MAP[channel_name]
-                
-                try:
-                    # Rename columns to standard names for merging
-                    df_clean = df.rename(columns={
-                        config['sku']: MAP_CHANNEL_SKU_COL,
-                        config['qty']: 'Total Pick Quantity' 
-                    })
+            for key, item in st.session_state.raw_dataframes.items():
+                df = read_uploaded_file(item['file'], f"{item['channel']} - {item['account']}")
+                if df is not None:
+                    config = CHANNEL_COLUMNS_MAP[item['channel']]
                     
-                    # Keep only essential columns plus the Channel metadata
-                    df_clean = df_clean[[MAP_CHANNEL_SKU_COL, 'Total Pick Quantity', 'Channel']]
-                    processed_data.append(df_clean)
-                    
-                except KeyError as e:
-                    st.error(f"Column Mismatch in **{channel_name}**: Column {e} not found.")
-                    st.warning("Please correct the configuration in the `app.py` script and re-upload.")
-                    return # Stop processing on error
+                    try:
+                        # Rename columns to standard names for merging
+                        df_clean = df.rename(columns={
+                            config['sku']: MAP_CHANNEL_SKU_COL,
+                            config['qty']: 'Total Pick Quantity' 
+                        })
+                        
+                        df_clean = df_clean[[MAP_CHANNEL_SKU_COL, 'Total Pick Quantity']]
+                        df_clean['Channel'] = item['channel']
+                        df_clean['Account name'] = item['account'] # Use the exact mapping column header
+                        processed_data.append(df_clean)
+                        
+                    except KeyError as e:
+                        st.error(f"Column Mismatch in **{item['channel']} - {item['account']}**: Column {e} not found.")
+                        st.warning(f"Verify configuration for {item['channel']}: SKU='{config['sku']}', Qty='{config['qty']}'")
+                        return
 
             # 2. Combine and Map
             combined_picklist_df = pd.concat(processed_data, ignore_index=True)
 
-            # NOTE: We assume the 'Account name' in the mapping file corresponds to the 'Channel name'
-            # since we are uploading one aggregated pick list per channel.
+            # Merge Pick List with Mapping Table (using Channel SKU and Account Name)
             merged_df = pd.merge(
                 combined_picklist_df,
                 mapping_df[[MAP_CHANNEL_SKU_COL, MAP_D_SKU_COL, MAP_ACCOUNT_COL]],
-                left_on=[MAP_CHANNEL_SKU_COL, 'Channel'],
-                right_on=[MAP_CHANNEL_SKU_COL, MAP_ACCOUNT_COL],
+                on=[MAP_CHANNEL_SKU_COL, MAP_ACCOUNT_COL],
                 how='left'
             )
             
@@ -185,13 +194,9 @@ def render_picklist_tab():
             )
 
         else:
-            # Display status summary for pending uploads
-            missing_files = [c for c in ALL_MARKETPLACE_CHANNELS if c not in all_raw_dataframes]
-            if mapping_file is None:
-                 st.warning("Mapping file is missing.")
-            if missing_files:
-                st.warning(f"Please upload pick lists for the following channels: **{', '.join(missing_files)}**")
-                
+            st.info("Upload status: Please check all channel tabs to upload the remaining files.")
+
+
 # ==============================================================================
 # 3. GST FILING TOOLS TAB FUNCTION (UNCHANGED)
 # ==============================================================================
