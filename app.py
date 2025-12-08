@@ -45,7 +45,7 @@ GSTR1_CHANNEL_MAP = {
 }
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR TABS
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - UNCHANGED
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -60,27 +60,27 @@ def inject_admin_panel_css():
         
         /* Base Colors & Text */
         :root, body, .stApp {
-            color: #3f516d !important; /* Deep slate blue for high-contrast text */
-            background-color: #f5f8fb; /* Light, slightly cool gray background for main content */
+            color: #3f516d !important; 
+            background-color: #f5f8fb; 
         }
         
         /* Sidebar Styling: Fixed, Full Height, and Clean */
         [data-testid="stSidebar"] {
-            background-color: #ffffff; /* White sidebar background */
+            background-color: #ffffff; 
             border-right: 1px solid #e3eaf3;
             box-shadow: 1px 0 5px rgba(0, 0, 0, 0.05);
-            position: fixed; /* Fixes the sidebar position */
-            height: 100vh; /* Full viewport height */
-            padding-top: 0; /* Remove top padding */
+            position: fixed; 
+            height: 100vh; 
+            padding-top: 0; 
         }
         
         /* Sidebar Header/Title */
         [data-testid="stSidebar"] h1 {
-            color: #71a5cc; /* Soft Pastel Blue */
+            color: #71a5cc; 
             font-size: 1.5rem;
             padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             margin-bottom: 0.5rem;
-            border-bottom: 1px solid #f0f8ff; /* Subtle separation */
+            border-bottom: 1px solid #f0f8ff; 
         }
         
         /* --- SIDEBAR MENU (RADIO BUTTONS FOR MAIN SERVICE) --- */
@@ -89,20 +89,20 @@ def inject_admin_panel_css():
             font-size: 1.1rem;
             font-weight: 600;
             padding: 0.6rem 1.5rem;
-            margin-left: 0; /* Align to the left edge */
+            margin-left: 0; 
             width: 100%;
             color: #3f516d;
             transition: background-color 0.2s;
         }
         [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
-            background-color: #f0f8ff; /* Light blue on hover */
+            background-color: #f0f8ff; 
         }
         /* Active Link Text Styling */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
             background-color: #e6f1f8 !important; 
             color: #3f516d !important; 
             font-weight: 700 !important;
-            border-left: 4px solid #71a5cc; /* Thicker pastel blue bar */
+            border-left: 4px solid #71a5cc; 
         }
 
         /* Hide the radio circle/dot */
@@ -113,13 +113,13 @@ def inject_admin_panel_css():
         /* --- MAIN CONTENT TABS STYLING (For Channel Navigation) --- */
         div[data-testid="stTabs"] {
             margin-bottom: 1.5rem;
-            background-color: white; /* Ensure tabs area is visible */
+            background-color: white; 
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             padding-left: 1rem;
         }
         button[data-baseweb="tab"] {
-            color: #71a5cc !important; /* Inactive tab text color - soft blue */
+            color: #71a5cc !important; 
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
@@ -128,9 +128,9 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #3f516d !important; /* Dark text for active tab */
+            color: #3f516d !important; 
             background-color: #ffffff !important; 
-            border-bottom: 3px solid #71a5cc !important; /* Soft blue bottom bar */
+            border-bottom: 3px solid #71a5cc !important; 
         }
 
 
@@ -157,8 +157,8 @@ def inject_admin_panel_css():
         div[data-testid="stVerticalBlock"], 
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 6px; /* Sharper corners */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Lighter, cleaner shadow */
+            border-radius: 6px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); 
             border: 1px solid #e3eaf3; 
             background: white;
             margin-bottom: 1.5rem;
@@ -168,11 +168,11 @@ def inject_admin_panel_css():
         .stButton>button {
             background-color: #a8d5ba;
             color: #3f516d !important;
-            border-radius: 6px; /* Sharper button corners */
+            border-radius: 6px; 
             border: 1px solid #94c7a6;
             padding: 0.6rem 1.2rem;
             font-weight: bold;
-            box-shadow: none; /* Keep buttons clean */
+            box-shadow: none; 
         }
         .stButton>button:hover {
             background-color: #94c7a6;
@@ -342,26 +342,37 @@ def render_default_page(menu_item):
 
 
 # ==============================================================================
-# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS)
+# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS) - FIX APPLIED
 # ==============================================================================
 
 def setup_sidebar_navigation():
     """Sets up the simplified two-item sidebar menu."""
     st.sidebar.markdown('<h1>Operations Hub</h1>', unsafe_allow_html=True)
     
+    # Initialize state with a default value
     if 'main_service' not in st.session_state:
         st.session_state.main_service = "Listing Compiler"
     
     # Static list of main services for the sidebar
-    main_options = list(MAIN_SERVICES.keys())
+    main_options = list(MAIN_SERVICES.keys()) # ["Listing Compiler", "GSTR Filing"]
     
+    # Determine the current index for the radio button
+    try:
+        current_index = main_options.index(st.session_state.main_service)
+    except ValueError:
+        # Fallback if the session state value is somehow invalid
+        current_index = 0
+        st.session_state.main_service = main_options[0]
+
+    # Create the sidebar radio button
     selected_main_service = st.sidebar.radio(
         "Main Services", 
         main_options, 
         key='main_service_radio',
-        index=main_options.index(st.session_state.main_service)
+        index=current_index # Use the determined index
     )
     
+    # Update the session state with the selected value
     st.session_state.main_service = selected_main_service
 
 
@@ -369,6 +380,12 @@ def render_channel_tabs():
     """Renders the channel options as tabs based on the selected main service."""
     
     current_service = st.session_state.main_service
+    
+    # Check if the service exists in the dictionary before proceeding
+    if current_service not in MAIN_SERVICES:
+        st.error(f"Error: Service '{current_service}' not found in configuration.")
+        return
+
     channel_options = MAIN_SERVICES[current_service]
     
     if not channel_options:
@@ -381,7 +398,8 @@ def render_channel_tabs():
     # Render content inside the respective tab container
     for i, channel_name in enumerate(channel_options):
         with tabs[i]:
-            st.title(f"{current_service} - {channel_name}")
+            # Use the main service title for context
+            # st.title(f"{current_service} - {channel_name}") 
             
             if current_service == "Listing Compiler":
                 if channel_name == "Consolidation Tool":
@@ -399,7 +417,7 @@ def render_channel_tabs():
 
 
 # ==============================================================================
-# 6. MAIN APP EXECUTION
+# 6. MAIN APP EXECUTION (UNCHANGED)
 # ==============================================================================
 
 def main():
