@@ -45,11 +45,11 @@ GSTR1_CHANNEL_MAP = {
 }
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR CONTRAST
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR HIGH CONTRAST
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS for a Phoenix-inspired, fixed-sidebar pastel theme."""
+    """Injects custom CSS for a Phoenix-inspired, fixed-sidebar theme with DARK TEXT."""
     st.markdown(
         """
         <style>
@@ -60,7 +60,7 @@ def inject_admin_panel_css():
         
         /* Base Colors & Text */
         :root, body, .stApp {
-            color: #3f516d !important; 
+            color: #212529 !important; /* FIX: Dark text for entire app body */
             background-color: #f5f8fb; 
         }
         
@@ -76,7 +76,7 @@ def inject_admin_panel_css():
         
         /* Sidebar Header/Title */
         [data-testid="stSidebar"] h1 {
-            color: #71a5cc; 
+            color: #71a5cc; /* Soft Pastel Blue for Logo/Title */
             font-size: 1.5rem;
             padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             margin-bottom: 0.5rem;
@@ -85,14 +85,12 @@ def inject_admin_panel_css():
         
         /* --- SIDEBAR MENU (RADIO BUTTONS FOR MAIN SERVICE) --- */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label {
-            /* Style the main menu items */
             font-size: 1.1rem;
             font-weight: 600;
             padding: 0.6rem 1.5rem;
             margin-left: 0; 
             width: 100%;
-            /* FIX: Increased contrast for better visibility */
-            color: #2c3e50 !important; 
+            color: #212529 !important; /* FIX: Ensure sidebar link text is dark */
             transition: background-color 0.2s;
         }
         [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
@@ -101,16 +99,15 @@ def inject_admin_panel_css():
         /* Active Link Text Styling */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
             background-color: #e6f1f8 !important; 
-            color: #3f516d !important; 
+            color: #3f516d !important; /* Darker blue for active link contrast */
             font-weight: 700 !important;
             border-left: 4px solid #71a5cc; 
         }
 
-        /* Hide the radio circle/dot */
+        /* Hide the radio circle/dot and radio label space */
         div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
             display: none !important;
         }
-        /* Remove the radio label space if it is empty */
         div[data-testid="stSidebar"] div[data-testid="stForm"] > label {
             padding: 0;
             margin: 0;
@@ -128,7 +125,7 @@ def inject_admin_panel_css():
             padding-left: 1rem;
         }
         button[data-baseweb="tab"] {
-            color: #71a5cc !important; 
+            color: #212529 !important; /* FIX: Dark text for inactive tabs */
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
@@ -137,7 +134,7 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #3f516d !important; 
+            color: #3f516d !important; /* Darker blue for active tab */
             background-color: #ffffff !important; 
             border-bottom: 3px solid #71a5cc !important; 
         }
@@ -153,12 +150,12 @@ def inject_admin_panel_css():
 
         /* Headers */
         h1 {
-            color: #71a5cc; 
+            color: #212529; /* FIX: Dark color for main h1 */
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
         h2, h3, h4 {
-            color: #5890b9; 
+            color: #3f516d; /* Darker blue for sub-headers */
             font-weight: 600;
         }
 
@@ -176,7 +173,7 @@ def inject_admin_panel_css():
         /* Primary Button Style (Soft Green) */
         .stButton>button {
             background-color: #a8d5ba;
-            color: #3f516d !important;
+            color: #212529 !important; /* FIX: Dark text for buttons */
             border-radius: 6px; 
             border: 1px solid #94c7a6;
             padding: 0.6rem 1.2rem;
@@ -351,7 +348,7 @@ def render_default_page(menu_item):
 
 
 # ==============================================================================
-# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS) - FIX APPLIED
+# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS) - UNCHANGED FUNCTIONALLY
 # ==============================================================================
 
 def setup_sidebar_navigation():
@@ -373,9 +370,9 @@ def setup_sidebar_navigation():
         current_index = 0
         st.session_state.main_service = main_options[0]
 
-    # Create the sidebar radio button. NOTE: The label is set to "" to hide the title.
+    # Create the sidebar radio button. Label is set to "" to hide the title.
     selected_main_service = st.sidebar.radio(
-        "",  # <-- FIX: Removed "Main Services" label
+        "",  
         main_options, 
         key='main_service_radio',
         index=current_index 
