@@ -27,11 +27,11 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (PASTEL ADMIN PANEL CSS)
+# 2. UI/UX STYLING (PASTEL ADMIN PANEL CSS - MAX READABILITY)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS for a soft, pastel Admin Panel look."""
+    """Injects custom CSS for a soft, pastel Admin Panel look with enforced dark text."""
     st.markdown(
         """
         <style>
@@ -40,26 +40,35 @@ def inject_admin_panel_css():
 
         /* --- Pastel Admin Panel Styling --- */
         
-        /* Base Colors: Soft background, dark text */
-        .stApp {
+        /* MAXIMUM READABILITY FIXES 
+        Enforce dark text across all primary components 
+        */
+        :root, body, .stApp {
+            color: #3f516d !important; /* Deep slate blue for primary text */
             background-color: #fcfdff; /* Very soft white/cream background */
-            color: #3f516d; /* Deep slate blue for primary text */
-            padding-top: 1.5rem;
         }
         
-        /* General Text Color */
-        p, label, .stMarkdown, div[data-testid="stText"] {
+        /* General Text, Input Labels, and spans */
+        p, label, .stMarkdown, div[data-testid="stText"], 
+        div[data-testid*="stFileUploader"] label, 
+        div[data-testid="stSidebar"] *, 
+        span {
             color: #3f516d !important;
             line-height: 1.6;
+        }
+
+        /* Set sidebar background explicitly */
+        .st-emotion-cache-1g82m8b, .st-emotion-cache-1wmy991 { /* Sidebar container classes */
+            background-color: #f7f9fc !important;
         }
 
         /* Custom Card Styles: Soft border and shadow */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 12px; /* Smoother, larger radius */
-            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); /* Soft shadow */
-            border: 1px solid #e3eaf3; /* Very light border */
+            border-radius: 12px; 
+            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); 
+            border: 1px solid #e3eaf3; 
             background: white;
             margin-bottom: 2rem;
             transition: box-shadow 0.3s ease-in-out;
@@ -71,7 +80,7 @@ def inject_admin_panel_css():
 
         /* Header Styles: Soft teal/blue color */
         h1 {
-            color: #5890b9; /* Soft teal/blue for main headers */
+            color: #5890b9; 
             font-weight: 700;
             margin-bottom: 0.5rem;
             margin-top: 0;
@@ -86,8 +95,8 @@ def inject_admin_panel_css():
         
         /* Primary Button Style (Soft Green) */
         .stButton>button {
-            background-color: #81c784; /* Pastel green submit button */
-            color: white;
+            background-color: #81c784; 
+            color: white !important; /* Ensure button text is white */
             border-radius: 8px;
             border: none;
             padding: 0.6rem 1.2rem;
@@ -97,13 +106,13 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         .stButton>button:hover {
-            background-color: #66bb6a; /* Slightly darker green on hover */
+            background-color: #66bb6a; 
             transform: translateY(-1px);
         }
 
         /* Metric styling */
         div[data-testid="stMetric"] {
-            background-color: #f0f8ff; /* Very light blue background */
+            background-color: #f0f8ff; 
             border-radius: 8px;
             padding: 1rem;
             border: 1px solid #c8d9e6;
@@ -114,17 +123,11 @@ def inject_admin_panel_css():
             font-weight: 700;
         }
         div[data-testid="stMetricLabel"] label {
-            color: #5890b9 !important; /* Pastel blue label */
+            color: #5890b9 !important; 
             font-weight: 600;
             text-transform: uppercase;
         }
-
-        /* Info/Warning banners */
-        div[data-testid="stAlert"] {
-            border-radius: 8px;
-            padding: 1rem;
-        }
-
+        
         /* Sidebar Navigation Fix: Ensure radio button text is visible and styled */
         .st-emotion-cache-1cypcdb label {
             color: #3f516d !important;
@@ -132,10 +135,12 @@ def inject_admin_panel_css():
             padding: 8px 10px;
             border-radius: 6px;
         }
+        /* Ensure radio button active text is dark */
         .st-emotion-cache-1cypcdb [data-baseweb="radio"] > div {
+            color: #3f516d !important;
             border-radius: 6px;
         }
-        
+
         /* Horizontal rule color */
         hr {
             border-top: 1px solid #e3eaf3; 
