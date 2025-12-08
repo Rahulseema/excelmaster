@@ -33,13 +33,19 @@ MAIN_SERVICES = {
         "Myntra", "Nykaa", "Ajio", "JioMart", "Tatacliq"
     ],
     "GSTR Filing": [
-        "GSTR1", "GSTR3B"
+        "GSTR1: Meesho", "GSTR1: Flipkart", "GSTR1: Amazon", "GSTR3B"
     ]
 }
-GSTR1_SUB_CHANNELS = ["Meesho", "Flipkart", "Amazon"]
+
+# Mapping tab names back to specific render functions
+GSTR1_CHANNEL_MAP = {
+    "GSTR1: Meesho": "Meesho", 
+    "GSTR1: Flipkart": "Flipkart", 
+    "GSTR1: Amazon": "Amazon"
+}
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - HEAVILY MODIFIED
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR TABS
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -77,48 +83,56 @@ def inject_admin_panel_css():
             border-bottom: 1px solid #f0f8ff; /* Subtle separation */
         }
         
-        /* --- EXPANDER/MENU HEADER STYLING --- */
-        div[data-testid="stExpander"] button {
-            color: #3f516d !important; 
-            font-weight: 700 !important;
-            padding: 0.5rem 0rem 0.5rem 1.5rem; 
-            border-radius: 4px;
-        }
-        div[data-testid="stExpander"] button:hover {
-            background-color: #f0f8ff; 
-        }
-        
-        /* Adjust Expander Icon/Arrow */
-        div[data-testid="stExpanderIcon"] {
-            color: #3f516d; 
-            font-size: 1.2rem;
-        }
-        
-        /* Radio Button / Navigation Links (Subtle, Clean) */
-        div[data-testid="stRadio"] label {
-            padding: 0.3rem 0rem 0.3rem 2.5rem; 
-            margin-left: -1rem; 
+        /* --- SIDEBAR MENU (RADIO BUTTONS FOR MAIN SERVICE) --- */
+        [data-testid="stSidebar"] div[data-testid="stRadio"] label {
+            /* Style the main menu items */
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0.6rem 1.5rem;
+            margin-left: 0; /* Align to the left edge */
             width: 100%;
-            border-radius: 4px;
-            font-weight: 500;
-            color: #5890b9; 
+            color: #3f516d;
+            transition: background-color 0.2s;
         }
-        div[data-testid="stRadio"] label:hover {
-            background-color: #e6f1f8; /* Very light blue on hover */
+        [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
+            background-color: #f0f8ff; /* Light blue on hover */
         }
-
-        /* Active Link Text Styling (More pronounced indicator) */
-        div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
+        /* Active Link Text Styling */
+        [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
             background-color: #e6f1f8 !important; 
             color: #3f516d !important; 
-            font-weight: 600 !important;
+            font-weight: 700 !important;
             border-left: 4px solid #71a5cc; /* Thicker pastel blue bar */
         }
-        
+
         /* Hide the radio circle/dot */
         div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
             display: none !important;
         }
+        
+        /* --- MAIN CONTENT TABS STYLING (For Channel Navigation) --- */
+        div[data-testid="stTabs"] {
+            margin-bottom: 1.5rem;
+            background-color: white; /* Ensure tabs area is visible */
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding-left: 1rem;
+        }
+        button[data-baseweb="tab"] {
+            color: #71a5cc !important; /* Inactive tab text color - soft blue */
+            font-weight: 600;
+            border-radius: 6px 6px 0 0 !important;
+            padding: 10px 20px !important;
+            background-color: transparent !important; 
+            border-bottom: 3px solid transparent !important;
+            transition: all 0.2s;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #3f516d !important; /* Dark text for active tab */
+            background-color: #ffffff !important; 
+            border-bottom: 3px solid #71a5cc !important; /* Soft blue bottom bar */
+        }
+
 
         /* --- Main Content Styling (Clean, Card-Based) --- */
         .block-container {
@@ -163,17 +177,13 @@ def inject_admin_panel_css():
         .stButton>button:hover {
             background-color: #94c7a6;
         }
-
+        
         /* File Uploader styling */
         div[data-testid*="stFileUploader"] {
             background-color: #fcfdff; 
             border: 1px dashed #c8d9e6;
             border-radius: 6px;
             padding: 10px;
-        }
-        /* Hide the radio circle/dot everywhere */
-        .stRadio div[data-baseweb="radio"] div:first-child {
-            display: none;
         }
 
         </style>
@@ -232,7 +242,6 @@ def get_sample_picklist_file():
 
 
 def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
-    # This is a placeholder function; full implementation is complex and omitted for code structure focus.
     st.success("Consolidation process complete! (Placeholder)")
     st.dataframe(pd.DataFrame({'SKU': ['D-101'], 'Qty': [50]}))
 
@@ -244,7 +253,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 def render_consolidation_tool():
     """Renders the main Pick List Compilation tool."""
     
-    st.title("📦 Listing Compiler: Consolidation Tool")
+    st.markdown("## 📦 Consolidation Tool")
     
     st.subheader("1. Master SKU Mapping File Setup (REQUIRED)")
     st.markdown("Map **Channel SKU, Size, and Color** to your **Our SKU** for consolidation.")
@@ -292,21 +301,22 @@ def render_consolidation_tool():
 
 def render_gstr1_channel_tool(channel_name):
     """Renders the specific GSTR1 channel upload tool (e.g., Meesho, Amazon)."""
-    st.title(f"📊 GSTR1 Preparation: {channel_name}")
+    
+    st.markdown(f"## 📈 GSTR1 Preparation: {channel_name}")
     st.markdown(f"Upload the necessary reports from **{channel_name}** to prepare the GSTR-1 data.")
     
     with st.container():
         if channel_name == "Meesho":
-            st.markdown('### Required Reports')
+            st.markdown('### Required Reports (Meesho)')
             st.file_uploader("1. Forward Sheet (CSV/Excel)", type=['csv', 'xlsx'], key="meesho_forward_uploader")
             st.file_uploader("2. Return Sheet (CSV/Excel)", type=['csv', 'xlsx'], key="meesho_return_uploader")
         
         elif channel_name == "Flipkart":
-            st.markdown('### Required Reports')
+            st.markdown('### Required Reports (Flipkart)')
             st.file_uploader("1. Sales Data (CSV/Excel)", type=['csv', 'xlsx'], key="flipkart_sales_uploader")
             
         elif channel_name == "Amazon":
-            st.markdown('### Required Reports')
+            st.markdown('### Required Reports (Amazon)')
             st.file_uploader("1. B2C MTR (CSV/Excel)", type=['csv', 'xlsx'], key="amazon_b2c_uploader")
             st.file_uploader("2. B2B MTR (CSV/Excel)", type=['csv', 'xlsx'], key="amazon_b2b_uploader")
 
@@ -315,7 +325,7 @@ def render_gstr1_channel_tool(channel_name):
 
 def render_gstr3b_tool():
     """Renders the GSTR3B Reconciliation tool."""
-    st.title("📊 GSTR-3B Reconciliation")
+    st.markdown("## 📊 GSTR-3B Reconciliation")
     st.markdown("Upload documents to reconcile Input Tax Credit (ITC) and summary tax liability.")
 
     with st.container():
@@ -327,100 +337,69 @@ def render_gstr3b_tool():
 
 def render_default_page(menu_item):
     """Renders a default welcome page for undeveloped sections."""
-    st.title(f"Welcome to the {menu_item} Module")
+    st.markdown(f"## 🚧 {menu_item} Module")
     st.info(f"This is the landing page for **{menu_item}**. Functionality will be implemented soon.")
 
 
 # ==============================================================================
-# 5. SIDEBAR NAVIGATION LOGIC (UNCHANGED FUNCTIONALITY)
+# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS)
 # ==============================================================================
 
 def setup_sidebar_navigation():
-    """
-    Sets up the tiered sidebar menu structure and controls the page state.
-    """
+    """Sets up the simplified two-item sidebar menu."""
     st.sidebar.markdown('<h1>Operations Hub</h1>', unsafe_allow_html=True)
     
-    # Initialize the current page selection in session state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = "Consolidation Tool"
+    if 'main_service' not in st.session_state:
+        st.session_state.main_service = "Listing Compiler"
+    
+    # Static list of main services for the sidebar
+    main_options = list(MAIN_SERVICES.keys())
+    
+    selected_main_service = st.sidebar.radio(
+        "Main Services", 
+        main_options, 
+        key='main_service_radio',
+        index=main_options.index(st.session_state.main_service)
+    )
+    
+    st.session_state.main_service = selected_main_service
 
-    # --- LISTING COMPILER Section ---
-    with st.sidebar.expander("📦 Listing Compiler", expanded=True):
-        
-        compiler_options = [
-            sub for sub in MAIN_SERVICES["Listing Compiler"] 
-            if sub not in ["Meesho", "Flipkart", "Amazon", "Myntra", "Nykaa", "Ajio", "JioMart", "Tatacliq"]
-        ]
-        
-        # Determine initial index for the Compiler Radio
-        if st.session_state.current_page in compiler_options:
-            compiler_index = compiler_options.index(st.session_state.current_page)
-        else:
-            compiler_index = 0
 
-        # Consolidation Tool is the first option
-        selected_compiler = st.radio(
-            "Compiler Apps", 
-            compiler_options, 
-            key='listing_compiler_radio',
-            index=compiler_index
-        )
-        
-        # Update current page only if this specific radio was clicked
-        if selected_compiler != st.session_state.current_page:
-            st.session_state.current_page = selected_compiler
-        
-        # Sub-channels for Listing Compiler (displayed as simple text/placeholders)
-        st.sidebar.markdown('**--- Sub-Channels ---**')
-        for sub_channel in [
-            "Meesho", "Flipkart", "Amazon", "Myntra", 
-            "Nykaa", "Ajio", "JioMart", "Tatacliq"
-        ]:
-            st.sidebar.markdown(f'<div style="padding-left: 2.5rem; color: #5890b9; font-size: 0.95rem;">{sub_channel}</div>', unsafe_allow_html=True)
+def render_channel_tabs():
+    """Renders the channel options as tabs based on the selected main service."""
+    
+    current_service = st.session_state.main_service
+    channel_options = MAIN_SERVICES[current_service]
+    
+    if not channel_options:
+        st.warning("No channels defined for this service.")
+        return
 
-    # --- GSTR FILING Section ---
-    with st.sidebar.expander("📊 GSTR Filing", expanded=True):
-        
-        # GSTR1 Sub-menu (Nested Expander)
-        with st.expander("GSTR1"):
-            gstr1_options = GSTR1_SUB_CHANNELS
+    # Use st.tabs to create the channel navigation
+    tabs = st.tabs(channel_options)
+
+    # Render content inside the respective tab container
+    for i, channel_name in enumerate(channel_options):
+        with tabs[i]:
+            st.title(f"{current_service} - {channel_name}")
             
-            # Determine initial index for GSTR1 channels
-            if st.session_state.current_page in gstr1_options:
-                current_index = gstr1_options.index(st.session_state.current_page)
-            else:
-                current_index = 0 
-
-            # GSTR1 channel selection radio
-            selected_gstr1 = st.radio(
-                "GSTR1 Channels", 
-                gstr1_options, 
-                key='gstr1_channels_radio',
-                index=current_index
-            )
+            if current_service == "Listing Compiler":
+                if channel_name == "Consolidation Tool":
+                    render_consolidation_tool()
+                else:
+                    render_default_page(f"Listing Compiler: {channel_name}")
             
-            # Update current page if a GSTR1 option is actively selected/clicked
-            if selected_gstr1 != st.session_state.current_page:
-                 st.session_state.current_page = selected_gstr1
+            elif current_service == "GSTR Filing":
+                if channel_name == "GSTR3B":
+                    render_gstr3b_tool()
+                elif channel_name in GSTR1_CHANNEL_MAP:
+                    render_gstr1_channel_tool(GSTR1_CHANNEL_MAP[channel_name])
+                else:
+                    render_default_page(f"GSTR Filing: {channel_name}")
 
-        # GSTR3B Main Option
-        gstr_options = ["GSTR3B"]
-        
-        # Index must be 0 for a list of length 1
-        selected_gstr3b = st.radio(
-            "Reconciliation",
-            gstr_options,
-            key='gstr3b_radio',
-            index=0 
-        )
-        
-        # Update current page only if GSTR3B is actively selected/clicked
-        if selected_gstr3b != st.session_state.current_page:
-            st.session_state.current_page = selected_gstr3b
 
 # ==============================================================================
-# 6. MAIN APP EXECUTION (UNCHANGED)
+# 6. MAIN APP EXECUTION
 # ==============================================================================
 
 def main():
@@ -432,22 +411,9 @@ def main():
     # 2. Setup Sidebar Navigation
     setup_sidebar_navigation()
 
-    # 3. Render the Main Content based on Selection
-    
-    current_page = st.session_state.current_page
-
-    if current_page == "Consolidation Tool":
-        render_consolidation_tool()
-    
-    elif current_page in GSTR1_SUB_CHANNELS:
-        render_gstr1_channel_tool(current_page)
-        
-    elif current_page == "GSTR3B":
-        render_gstr3b_tool()
-    
-    else:
-        # Fallback for any other menu options (e.g., Myntra, Nykaa, etc.)
-        render_default_page(current_page)
+    # 3. Render the Channel Tabs and Content
+    st.markdown(f"# {st.session_state.main_service}") # Main Title
+    render_channel_tabs()
 
 if __name__ == "__main__":
     # Ensure session state is initialized
