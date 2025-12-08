@@ -3,7 +3,7 @@ import pandas as pd
 from io import BytesIO
 
 # ==============================================================================
-# 1. CONFIGURATION SECTION
+# 1. CONFIGURATION SECTION (UNCHANGED)
 # ==============================================================================
 
 # Your 10 Master Account Names 
@@ -39,7 +39,7 @@ MAIN_SERVICES = {
 GSTR1_SUB_CHANNELS = ["Meesho", "Flipkart", "Amazon"]
 
 # ==============================================================================
-# 2. UI/UX STYLING (PASTEL ADMIN CSS - Sidebar Focused) - UNCHANGED
+# 2. UI/UX STYLING (PASTEL ADMIN CSS - Sidebar Focused) - MODIFIED
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -73,10 +73,10 @@ def inject_admin_panel_css():
             margin-bottom: 0.5rem;
         }
 
-        /* Expander/Menu Header Styling */
+        /* --- EXPANDER/MENU HEADER STYLING (IMPROVED VISIBILITY) --- */
         div[data-testid="stExpander"] button {
-            color: #3f516d !important; /* Dark text for menu headers */
-            font-weight: 600;
+            color: #3f516d !important; /* Darker text for high contrast */
+            font-weight: 700 !important; /* Bolder text for visibility */
             padding: 0.5rem 0rem 0.5rem 1.5rem; 
             border-radius: 4px;
         }
@@ -86,8 +86,10 @@ def inject_admin_panel_css():
         
         /* Adjust Expander Icon/Arrow */
         div[data-testid="stExpanderIcon"] {
-            color: #71a5cc; /* Soft Blue Arrow/Icon */
+            color: #3f516d; /* Darker arrow for better visibility */
+            font-size: 1.2rem; /* Slightly larger icon */
         }
+        /* ------------------------------------------------------------- */
         
         /* Radio Button / Navigation Links (Mimicking the image style) */
         div[data-testid="stRadio"] label {
@@ -217,7 +219,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
 
 # ==============================================================================
-# 4. CONTENT RENDERING FUNCTIONS
+# 4. CONTENT RENDERING FUNCTIONS (UNCHANGED)
 # ==============================================================================
 
 def render_consolidation_tool():
@@ -311,7 +313,7 @@ def render_default_page(menu_item):
 
 
 # ==============================================================================
-# 5. SIDEBAR NAVIGATION LOGIC
+# 5. SIDEBAR NAVIGATION LOGIC (UNCHANGED FUNCTIONALITY)
 # ==============================================================================
 
 def setup_sidebar_navigation():
@@ -325,6 +327,7 @@ def setup_sidebar_navigation():
         st.session_state.current_page = "Consolidation Tool"
 
     # --- LISTING COMPILER Section ---
+    # NOTE: st.sidebar.expander creates a collapsable section in the sidebar.
     with st.sidebar.expander("📦 Listing Compiler", expanded=True):
         
         compiler_options = [
@@ -362,6 +365,7 @@ def setup_sidebar_navigation():
     with st.sidebar.expander("📊 GSTR Filing", expanded=True):
         
         # GSTR1 Sub-menu (Nested Expander)
+        # NOTE: This nested st.expander is the secondary collapsible item.
         with st.expander("GSTR1"):
             gstr1_options = GSTR1_SUB_CHANNELS
             
@@ -369,7 +373,6 @@ def setup_sidebar_navigation():
             if st.session_state.current_page in gstr1_options:
                 current_index = gstr1_options.index(st.session_state.current_page)
             else:
-                # Default to the first GSTR1 channel if not currently selected
                 current_index = 0 
 
             # GSTR1 channel selection radio
@@ -387,7 +390,7 @@ def setup_sidebar_navigation():
         # GSTR3B Main Option
         gstr_options = ["GSTR3B"]
         
-        # FIX: The index must always be 0 for a list of length 1, resolving StreamlitAPIException.
+        # Index must be 0 for a list of length 1
         selected_gstr3b = st.radio(
             "Reconciliation",
             gstr_options,
@@ -400,7 +403,7 @@ def setup_sidebar_navigation():
             st.session_state.current_page = selected_gstr3b
 
 # ==============================================================================
-# 6. MAIN APP EXECUTION
+# 6. MAIN APP EXECUTION (UNCHANGED)
 # ==============================================================================
 
 def main():
