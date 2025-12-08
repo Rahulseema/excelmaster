@@ -45,7 +45,7 @@ GSTR1_CHANNEL_MAP = {
 }
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - UNCHANGED
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR CONTRAST
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -91,7 +91,8 @@ def inject_admin_panel_css():
             padding: 0.6rem 1.5rem;
             margin-left: 0; 
             width: 100%;
-            color: #3f516d;
+            /* FIX: Increased contrast for better visibility */
+            color: #2c3e50 !important; 
             transition: background-color 0.2s;
         }
         [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
@@ -109,7 +110,15 @@ def inject_admin_panel_css():
         div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
             display: none !important;
         }
-        
+        /* Remove the radio label space if it is empty */
+        div[data-testid="stSidebar"] div[data-testid="stForm"] > label {
+            padding: 0;
+            margin: 0;
+            height: 0;
+            overflow: hidden;
+            display: block;
+        }
+
         /* --- MAIN CONTENT TABS STYLING (For Channel Navigation) --- */
         div[data-testid="stTabs"] {
             margin-bottom: 1.5rem;
@@ -364,12 +373,12 @@ def setup_sidebar_navigation():
         current_index = 0
         st.session_state.main_service = main_options[0]
 
-    # Create the sidebar radio button
+    # Create the sidebar radio button. NOTE: The label is set to "" to hide the title.
     selected_main_service = st.sidebar.radio(
-        "Main Services", 
+        "",  # <-- FIX: Removed "Main Services" label
         main_options, 
         key='main_service_radio',
-        index=current_index # Use the determined index
+        index=current_index 
     )
     
     # Update the session state with the selected value
@@ -398,8 +407,6 @@ def render_channel_tabs():
     # Render content inside the respective tab container
     for i, channel_name in enumerate(channel_options):
         with tabs[i]:
-            # Use the main service title for context
-            # st.title(f"{current_service} - {channel_name}") 
             
             if current_service == "Listing Compiler":
                 if channel_name == "Consolidation Tool":
