@@ -27,30 +27,30 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (MATDASH ADMIN CSS - STICKY HEADER)
+# 2. UI/UX STYLING (PASTEL ADMIN CSS - STICKY HEADER & TABS)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS to mimic the MatDash Admin Template look, optimized for tabs."""
+    """Injects custom CSS for a soft, low-contrast pastel theme with a sticky header."""
     st.markdown(
         """
         <style>
         /* Base Streamlit Overrides */
         #MainMenu, footer, header {visibility: hidden;}
 
-        /* --- MatDash Admin Styling --- */
+        /* --- Pastel Admin Styling --- */
         
         /* Base Colors & Text */
         :root, body, .stApp {
-            color: #1f2937 !important; /* Dark Slate Gray for primary text */
-            background-color: #f8f9fa; /* Light gray background */
-            padding-top: 0; /* Adjusted for sticky header */
+            color: #3f516d !important; /* Deep slate blue for high-contrast text */
+            background-color: #fcfdff; /* Very soft white/cream background */
+            padding-top: 0; 
         }
         
-        /* General Text, Labels, Spans */
+        /* General Text, Labels, Spans (Enforcing dark text) */
         p, label, .stMarkdown, div[data-testid="stText"], 
         div[data-testid*="stFileUploader"] label, span {
-            color: #1f2937 !important;
+            color: #3f516d !important;
             line-height: 1.6;
             font-size: 1rem;
         }
@@ -59,13 +59,15 @@ def inject_admin_panel_css():
         .st-emotion-cache-1jm69f1 { /* Target the main container wrapping the header and tabs */
             position: sticky;
             top: 0;
-            z-index: 1000; /* Ensure it stays above scrolling content */
-            padding: 0; /* Remove default padding */
+            z-index: 1000; 
+            padding: 0; 
+            background-color: #ffffff; /* Ensure white background for the sticky bar */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Soft shadow */
         }
         
         /* Adjust the block container where the main content starts */
         .block-container {
-            padding-top: 1rem;
+            padding-top: 1.5rem;
             padding-left: 2rem; 
         }
 
@@ -75,75 +77,77 @@ def inject_admin_panel_css():
             width: 0 !important;
         }
 
-        /* Custom Card Styles: Defined shadow, crisp look */
+        /* Custom Card Styles: Soft, floating look */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 6px; 
-            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.1), 0 3px 5px -3px rgba(0, 0, 0, 0.05); /* Slightly cleaner shadow */
-            border: 1px solid #e5e7eb; 
+            border-radius: 10px; /* Softer corners */
+            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); 
+            border: 1px solid #e3eaf3; /* Very light border */
             background: white;
             margin-bottom: 2rem;
             transition: box-shadow 0.2s ease-in-out;
         }
         
-        /* Header Styles: Deep Indigo Accent */
+        /* Header Styles: Soft Blue Accent */
         h1 {
-            color: #4f46e5; /* Deep Indigo for main title */
-            font-weight: 800;
+            color: #71a5cc; /* Soft Pastel Blue for main title */
+            font-weight: 700;
             margin-bottom: 0.5rem;
             margin-top: 0;
             padding-bottom: 0.5rem;
         }
         h2, h3, h4 {
-            color: #1f2937; 
-            font-weight: 700;
+            color: #5890b9; /* Slightly darker soft blue for sub-headers */
+            font-weight: 600;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
         }
         
-        /* Primary Button Style (Emerald Green for Action) */
+        /* Primary Button Style (Soft Green for Action) */
         .stButton>button {
-            background-color: #0d9488; /* Slightly deeper Teal for polish */
-            color: white !important; 
-            border-radius: 6px;
-            border: none;
+            background-color: #a8d5ba; /* Soft Mint Green */
+            color: #3f516d !important; /* Dark text on light button */
+            border-radius: 8px;
+            border: 1px solid #94c7a6;
             padding: 0.6rem 1.2rem;
             font-weight: bold;
             letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: background-color 0.2s;
         }
         .stButton>button:hover {
-            background-color: #0f766e; 
+            background-color: #94c7a6; /* Slightly deeper green on hover */
         }
 
         /* Metric styling: Clean and prominent */
         div[data-testid="stMetric"] {
-            background-color: #f3f4f6; 
-            border-radius: 6px;
+            background-color: #f0f8ff; /* Very light blue background */
+            border-radius: 8px;
             padding: 1rem;
-            border: 1px solid #d1d5db;
+            border: 1px solid #c8d9e6;
         }
         div[data-testid="stMetricValue"] {
-            color: #4f46e5 !important; 
+            color: #5890b9 !important; /* Soft blue value */
             font-size: 2rem;
-            font-weight: 800;
+            font-weight: 700;
         }
         div[data-testid="stMetricLabel"] label {
-            color: #1f2937 !important; 
+            color: #71a5cc !important; /* Pastel blue label */
             font-weight: 600;
             text-transform: uppercase;
         }
 
         /* Streamlit Tab Styling (Contained within sticky header) */
         div[data-testid="stTabs"] {
-            margin-bottom: 0; /* Remove gap before content */
+            margin-bottom: 0; 
             padding-left: 1.5rem;
             padding-right: 1.5rem;
-            background-color: white; /* Ensure tab area has a solid background */
+            background-color: #ffffff; /* White background for visibility */
+            border-bottom: 1px solid #e3eaf3;
         }
         button[data-baseweb="tab"] {
-            color: #4b5563 !important; /* Inactive tab text color */
+            color: #71a5cc !important; /* Inactive tab text color - soft blue */
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
@@ -152,16 +156,31 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #4f46e5 !important; 
+            color: #3f516d !important; /* Dark text for active tab */
             background-color: #ffffff !important; 
-            border-bottom: 3px solid #4f46e5 !important; 
+            border-bottom: 3px solid #71a5cc !important; /* Soft blue bottom bar */
         }
 
         /* Horizontal rule color */
         hr {
-            border-top: 1px solid #e5e7eb; 
+            border-top: 1px solid #e3eaf3; 
             margin: 1.5rem 0;
         }
+        
+        /* Info/Warning Banners for soft look */
+        div[data-testid="stAlert"] {
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        div[data-testid="stAlert"] .st-emotion-cache-121g2h{
+            background-color: #f0f8ff !important; /* Light blue info */
+            border-color: #c8d9e6 !important;
+            color: #3f516d !important;
+        }
+        div[data-testid="stAlert"] .st-emotion-cache-121g2h .st-emotion-cache-1cypcdb{
+             color: #3f516d !important;
+        }
+
 
         </style>
         """,
@@ -169,9 +188,9 @@ def inject_admin_panel_css():
     )
 
 def admin_header():
-    """Renders the main Application Title, now separate from the tab content."""
-    st.markdown('<div style="padding: 1rem 1.5rem; background-color: white; border-bottom: 1px solid #e5e7eb; z-index: 1001;">'
-                f'<h1 style="color: #4f46e5; margin: 0;">Operations Hub</h1>'
+    """Renders the main Application Title in the sticky area."""
+    st.markdown('<div style="padding: 1rem 1.5rem; background-color: white; z-index: 1001;">'
+                f'<h1 style="color: #71a5cc; margin: 0;">Operations Hub 🌸</h1>'
                 '</div>', unsafe_allow_html=True)
 
 
@@ -479,7 +498,7 @@ def main():
         render_gst_tab()
 
 if __name__ == "__main__":
-    # Ensure raw_file_objects is initialized before the main function runs if using sessions
+    # Ensure session state is initialized
     if 'raw_file_objects' not in st.session_state:
         st.session_state.raw_file_objects = {}
     if 'mapping_file_object' not in st.session_state:
