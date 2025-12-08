@@ -6,23 +6,31 @@ from io import BytesIO
 # 1. CONFIGURATION SECTION (CRITICAL: ADJUST COLUMN NAMES HERE!)
 # ==============================================================================
 
-# Your 9 Meesho Account Names (for clarity)
+# Your 9 Meesho Account Names
 MEESHO_ACCOUNT_NAMES = [
     "Drench", "Drench India", "Sparsh", "Sparsh SC", "Shine Arc",
     "Ansh ent", "BnB Industries", "Shopforher", "AV Enterprises"
 ]
 
-# Master list of all Channels
-ALL_CHANNELS = ["Meesho", "Amazon", "Flipkart", "Myntra", "Nykaa"]
+# Master list of all NON-MEESHO Channels (assuming one account for these)
+OTHER_CHANNELS = ["Amazon", "Flipkart", "Myntra", "Nykaa"]
+
+# Full list of all required pick list uploads
+ALL_PICKLIST_UPLOADS = (
+    [{"channel": "Meesho", "account": name} for name in MEESHO_ACCOUNT_NAMES] +
+    [{"channel": channel, "account": f"{channel} - Main"} for channel in OTHER_CHANNELS]
+)
 
 # Configuration for Pick List Column Names by Channel
 # !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
+# Search results confirm 'sku', 'quantity-purchased' for Amazon FBM reports.
+# Use 'Seller SKU ID' for Flipkart. Myntra/Nykaa often use 'Seller SKU' / 'Quantity'.
 CHANNEL_COLUMNS_MAP = {
-    "Meesho": {'sku': 'SKU ID', 'qty': 'Quantity'}, # Common Meesho Names
-    "Amazon": {'sku': 'sku', 'qty': 'quantity-purchased'}, # Common Amazon Names
-    "Flipkart": {'sku': 'Seller SKU ID', 'qty': 'quantity-purchased'}, # Common Flipkart Names
-    "Myntra": {'sku': 'Seller SKU', 'qty': 'Quantity'}, # ASSUMED: Needs Verification
-    "Nykaa": {'sku': 'Seller SKU', 'qty': 'Quantity'}, # ASSUMED: Needs Verification
+    "Meesho": {'sku': 'SKU ID', 'qty': 'Quantity'},
+    "Amazon": {'sku': 'sku', 'qty': 'quantity-purchased'}, 
+    "Flipkart": {'sku': 'Seller SKU ID', 'qty': 'quantity-purchased'},
+    "Myntra": {'sku': 'Seller SKU', 'qty': 'Quantity'},
+    "Nykaa": {'sku': 'Seller Code', 'qty': 'Inventory Qty'}, # Inventory/Sale Report often uses these names
 }
 
 # Mapping file column names (as provided by user):
@@ -43,6 +51,7 @@ def read_uploaded_file(uploaded_file):
         return None
     except Exception as e:
         st.error(f"Error reading file **{uploaded_file.name}**: {type(e).__name__} - {e}")
+        st.warning("Ensure the file is not corrupted and is a valid CSV/Excel format.")
         return None
 
 # ==============================================================================
@@ -51,7 +60,7 @@ def read_uploaded_file(uploaded_file):
 
 def render_picklist_tab():
     st.title("📦 Multi-Channel Master Pick List Compiler")
-    st.markdown("Combines pick lists from all your channels and maps them to your master D SKU.")
+    st.markdown("Combines pick lists from **13 uploads** and maps them to your master D SKU.")
     st.markdown("---")
 
     uploaded_data = []
@@ -67,36 +76,25 @@ def render_picklist_tab():
     st.markdown("---")
 
 
-    # 2. UPLOAD MULTI-CHANNEL PICK LISTS
-    st.subheader("2️⃣ Upload Channel Pick Lists")
+    # 2. UPLOAD ALL PICK LISTS
+    st.subheader(f"2️⃣ Upload Channel Pick Lists (Total {len(ALL_PICKLIST_UPLOADS)} Files)")
 
-    # Use a dynamic list for all uploads
-    all_uploads = []
-    
-    # Add 9 Meesho Accounts
-    for name in MEESHO_ACCOUNT_NAMES:
-        all_uploads.append({"channel": "Meesho", "account": name})
-
-    # Add other channels (assuming one account per other channel for now)
-    for channel in ALL_CHANNELS:
-        if channel != "Meesho":
-            # Creates an entry like "Amazon - Main Account"
-            all_uploads.append({"channel": channel, "account": f"{channel} - Main Account"})
-
-
-    # Create uploaders dynamically
     cols = st.columns(3)
     uploaded_files_map = {}
     all_pick_lists_uploaded = True
 
-    with st.expander("Upload All Pick List Reports (Total 13 Uploads)", expanded=True):
-        for i, item in enumerate(all_uploads):
+    # This loop generates the 13 individual upload widgets
+    with st.expander("Upload All Pick List Reports (9 Meesho + 4 Others)", expanded=True):
+        for i, item in enumerate(ALL_PICKLIST_UPLOADS):
             channel = item["channel"]
             account_name = item["account"]
             
+            # The 'Account name' from the mapping file must match the name used here for the merge to work correctly.
+            display_name = account_name if channel == "Meesho" else f"{channel}"
+            
             with cols[i % 3]: # Distribute across 3 columns
                 file = st.file_uploader(
-                    f"**{i+1}. {account_name}** ({channel})",
+                    f"**{i+1}. {display_name}** ({channel} Pick List)",
                     type=ALLOWED_FILE_TYPES,
                     key=f"file_uploader_picklist_{i}"
                 )
@@ -114,10 +112,10 @@ def render_picklist_tab():
         # Read Mapping File FIRST
         mapping_df = read_uploaded_file(mapping_file)
         if mapping_df is None:
-             st.error("Failed to read mapping file.")
+             st.error("Failed to read mapping file. Please check file format.")
              return
 
-        # 1. Process all Pick Lists
+        # 1. Process all 13 Pick Lists
         for account_name, upload_info in uploaded_files_map.items():
             file = upload_info['file']
             channel = upload_info['channel']
@@ -139,15 +137,16 @@ def render_picklist_tab():
                     uploaded_data.append(df_clean)
                     
                 except KeyError as e:
-                    st.error(f"Column Error in **{account_name}** ({channel}): Column {e} not found.")
-                    st.warning(f"Please check the configuration for '{channel}' in the script or verify your report headers.")
+                    st.error(f"Column Error in **{account_name}** ({channel}): Column **{e}** not found.")
+                    st.error(f"Expected SKU Column: '{config['sku']}'. Expected Quantity Column: '{config['qty']}'.")
+                    st.warning(f"You must update the `CHANNEL_COLUMNS_MAP` dictionary in the `app.py` script for the '{channel}' channel.")
                     return # Stop processing on first error
 
-        # 2. Final Consolidation
+        # 2. Final Consolidation and Mapping
         if uploaded_data:
             combined_picklist_df = pd.concat(uploaded_data, ignore_index=True)
 
-            # --- Mapping Logic ---
+            # Merge Pick List with Mapping Table
             merged_df = pd.merge(
                 combined_picklist_df,
                 mapping_df[[MAP_CHANNEL_SKU_COL, MAP_D_SKU_COL, MAP_ACCOUNT_COL]],
@@ -156,7 +155,7 @@ def render_picklist_tab():
                 how='left'
             )
             
-            # Handle unmapped SKUs
+            # Handle unmapped SKUs (use Channel SKU as D SKU if D SKU is missing)
             merged_df[MAP_D_SKU_COL] = merged_df[MAP_D_SKU_COL].fillna(merged_df[MAP_CHANNEL_SKU_COL])
 
             # Final Consolidation using the Master D SKU
