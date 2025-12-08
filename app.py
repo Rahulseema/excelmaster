@@ -45,7 +45,7 @@ GSTR1_CHANNEL_MAP = {
 }
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - MODIFIED FOR HIGH CONTRAST
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - FINALIZED FOR VISIBILITY
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -60,7 +60,7 @@ def inject_admin_panel_css():
         
         /* Base Colors & Text */
         :root, body, .stApp {
-            color: #212529 !important; /* FIX: Dark text for entire app body */
+            color: #212529 !important; 
             background-color: #f5f8fb; 
         }
         
@@ -76,7 +76,7 @@ def inject_admin_panel_css():
         
         /* Sidebar Header/Title */
         [data-testid="stSidebar"] h1 {
-            color: #71a5cc; /* Soft Pastel Blue for Logo/Title */
+            color: #71a5cc; 
             font-size: 1.5rem;
             padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             margin-bottom: 0.5rem;
@@ -90,7 +90,7 @@ def inject_admin_panel_css():
             padding: 0.6rem 1.5rem;
             margin-left: 0; 
             width: 100%;
-            color: #212529 !important; /* FIX: Ensure sidebar link text is dark */
+            color: #212529 !important; 
             transition: background-color 0.2s;
         }
         [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
@@ -99,19 +99,21 @@ def inject_admin_panel_css():
         /* Active Link Text Styling */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
             background-color: #e6f1f8 !important; 
-            color: #3f516d !important; /* Darker blue for active link contrast */
+            color: #3f516d !important; 
             font-weight: 700 !important;
             border-left: 4px solid #71a5cc; 
         }
 
-        /* Hide the radio circle/dot and radio label space */
+        /* Hide the radio circle/dot */
         div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
             display: none !important;
         }
+        
+        /* FIX: Remove the space reserved for the radio button label */
         div[data-testid="stSidebar"] div[data-testid="stForm"] > label {
+            height: 0;
             padding: 0;
             margin: 0;
-            height: 0;
             overflow: hidden;
             display: block;
         }
@@ -125,7 +127,7 @@ def inject_admin_panel_css():
             padding-left: 1rem;
         }
         button[data-baseweb="tab"] {
-            color: #212529 !important; /* FIX: Dark text for inactive tabs */
+            color: #212529 !important; 
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
@@ -134,7 +136,7 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #3f516d !important; /* Darker blue for active tab */
+            color: #3f516d !important; 
             background-color: #ffffff !important; 
             border-bottom: 3px solid #71a5cc !important; 
         }
@@ -150,12 +152,12 @@ def inject_admin_panel_css():
 
         /* Headers */
         h1 {
-            color: #212529; /* FIX: Dark color for main h1 */
+            color: #212529; 
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
         h2, h3, h4 {
-            color: #3f516d; /* Darker blue for sub-headers */
+            color: #3f516d; 
             font-weight: 600;
         }
 
@@ -173,7 +175,7 @@ def inject_admin_panel_css():
         /* Primary Button Style (Soft Green) */
         .stButton>button {
             background-color: #a8d5ba;
-            color: #212529 !important; /* FIX: Dark text for buttons */
+            color: #212529 !important; 
             border-radius: 6px; 
             border: 1px solid #94c7a6;
             padding: 0.6rem 1.2rem;
@@ -366,7 +368,6 @@ def setup_sidebar_navigation():
     try:
         current_index = main_options.index(st.session_state.main_service)
     except ValueError:
-        # Fallback if the session state value is somehow invalid
         current_index = 0
         st.session_state.main_service = main_options[0]
 
@@ -378,7 +379,6 @@ def setup_sidebar_navigation():
         index=current_index 
     )
     
-    # Update the session state with the selected value
     st.session_state.main_service = selected_main_service
 
 
@@ -387,7 +387,6 @@ def render_channel_tabs():
     
     current_service = st.session_state.main_service
     
-    # Check if the service exists in the dictionary before proceeding
     if current_service not in MAIN_SERVICES:
         st.error(f"Error: Service '{current_service}' not found in configuration.")
         return
