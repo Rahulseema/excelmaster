@@ -27,7 +27,7 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (PASTEL ADMIN CSS - STICKY HEADER & TABS)
+# 2. UI/UX STYLING (PASTEL ADMIN CSS - STICKY HEADER & TABS) - UNCHANGED
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -350,7 +350,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
 
 # ==============================================================================
-# 4. PICK LIST COMPILER TAB FUNCTION (CONSOLIDATED & ADMIN-STYLE)
+# 4. PICK LIST COMPILER TAB FUNCTION (CONSOLIDATED & ADMIN-STYLE) - UNCHANGED
 # ==============================================================================
 
 def render_picklist_tab():
@@ -454,17 +454,59 @@ def render_gst_tab():
     st.markdown("Tools to assist with GSTR-1 and GSTR-3B preparation.")
     st.markdown("---")
 
-    st.subheader("GSTR-1 Preparation (Sales Summary)")
-    st.markdown("Generate your monthly GSTR-1 summary.")
+    st.subheader("GSTR-1 Preparation (Channel Sales Summary) 📈")
+    st.markdown("Upload monthly sales reports from e-commerce channels to prepare GSTR-1 data.")
     
-    with st.container():
-        st.warning("Future Feature: Upload Sales Reports to generate HSN/GST summary.")
-        gstr1_file = st.file_uploader("Upload Monthly Sales Register (CSV/Excel)", type=['csv', 'xlsx'], key="gstr1_uploader")
-        if gstr1_file: st.info(f"File '{gstr1_file.name}' uploaded for GSTR-1 analysis.")
+    # --- Channel Cards Container ---
+    cols = st.columns(3)
 
+    # --- Meesho Card ---
+    with cols[0]:
+        with st.container():
+            st.markdown('### Meesho Reports')
+            st.markdown("Upload the **Forward Sheet** and **Return Sheet** for the month.")
+            st.file_uploader(
+                "1. Forward Sheet (CSV/Excel)", 
+                type=['csv', 'xlsx'], 
+                key="meesho_forward_uploader"
+            )
+            st.file_uploader(
+                "2. Return Sheet (CSV/Excel)", 
+                type=['csv', 'xlsx'], 
+                key="meesho_return_uploader"
+            )
+
+    # --- Flipkart Card ---
+    with cols[1]:
+        with st.container():
+            st.markdown('### Flipkart Reports')
+            st.markdown("Upload the compiled **Sales Data** report.")
+            st.file_uploader(
+                "1. Sales Data (CSV/Excel)", 
+                type=['csv', 'xlsx'], 
+                key="flipkart_sales_uploader"
+            )
+            st.markdown('<div style="height: 5.3rem;"></div>', unsafe_allow_html=True) # Spacer
+
+    # --- Amazon Card ---
+    with cols[2]:
+        with st.container():
+            st.markdown('### Amazon Reports')
+            st.markdown("Upload the required B2C and B2B MTR reports.")
+            st.file_uploader(
+                "1. B2C MTR (CSV/Excel)", 
+                type=['csv', 'xlsx'], 
+                key="amazon_b2c_uploader"
+            )
+            st.file_uploader(
+                "2. B2B MTR (CSV/Excel)", 
+                type=['csv', 'xlsx'], 
+                key="amazon_b2b_uploader"
+            )
+            
     st.markdown("---")
 
-    st.subheader("GSTR-3B Reconciliation (Summary & ITC)")
+    st.subheader("GSTR-3B Reconciliation (Summary & ITC) 📊")
     st.markdown("Reconcile Input Tax Credit (ITC) and summary tax liability.")
     
     with st.container():
