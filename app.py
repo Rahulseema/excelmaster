@@ -27,11 +27,11 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (MATDASH ADMIN CSS)
+# 2. UI/UX STYLING (MATDASH ADMIN CSS - Sidebar Removed)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS to mimic the MatDash Admin Template look."""
+    """Injects custom CSS to mimic the MatDash Admin Template look, optimized for tabs."""
     st.markdown(
         """
         <style>
@@ -55,19 +55,22 @@ def inject_admin_panel_css():
             font-size: 1rem;
         }
         
-        /* Sidebar Styling */
-        .st-emotion-cache-1g82m8b, .st-emotion-cache-1wmy991 { /* Sidebar container classes */
-            background-color: #ffffff !important; /* White sidebar */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        /* Sidebar Removal (Important for tab format) */
+        .st-emotion-cache-1g82m8b, .st-emotion-cache-1wmy991 { 
+            visibility: hidden !important; 
+            width: 0 !important;
         }
-
+        .block-container {
+            padding-left: 2rem; /* Restore normal left padding */
+        }
+        
         /* Custom Card Styles: Defined shadow, crisp look */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 6px; /* Sharper corners */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08); /* Stronger shadow */
-            border: 1px solid #e5e7eb; /* Light border */
+            border-radius: 6px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08); 
+            border: 1px solid #e5e7eb; 
             background: white;
             margin-bottom: 2rem;
             transition: box-shadow 0.2s ease-in-out;
@@ -105,7 +108,7 @@ def inject_admin_panel_css():
 
         /* Metric styling: Clean and prominent */
         div[data-testid="stMetric"] {
-            background-color: #f3f4f6; /* Very light gray */
+            background-color: #f3f4f6; 
             border-radius: 6px;
             padding: 1rem;
             border: 1px solid #d1d5db;
@@ -121,29 +124,24 @@ def inject_admin_panel_css():
             text-transform: uppercase;
         }
 
-        /* Sidebar Navigation: Highlight Active Tab with Indigo */
-        .st-emotion-cache-1cypcdb label {
-            color: #1f2937 !important;
+        /* Streamlit Tab Styling */
+        div[data-testid="stTabs"] {
+            margin-bottom: 2rem;
+        }
+        button[data-baseweb="tab"] {
+            color: #1f2937 !important; /* Inactive tab text color */
             font-weight: 600;
-            padding: 8px 10px;
-            border-radius: 4px;
+            border-radius: 6px 6px 0 0 !important;
+            padding: 10px 20px !important;
+            background-color: #e5e7eb !important; /* Light background for tabs */
+            border-bottom: 3px solid transparent !important;
+            transition: all 0.2s;
         }
-        .st-emotion-cache-1cypcdb [data-baseweb="radio"] > div {
-             /* Target active radio label background for Indigo accent */
-             background-color: transparent;
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #4f46e5 !important; /* Deep Indigo for active tab text */
+            background-color: #ffffff !important; /* White active tab background */
+            border-bottom: 3px solid #4f46e5 !important; /* Indigo bottom bar */
         }
-        .st-emotion-cache-1cypcdb [aria-checked="true"] {
-             background-color: #eef2ff !important; /* Very light indigo background for active tab */
-             border-left: 4px solid #4f46e5; /* Indigo accent bar */
-             border-radius: 0px 6px 6px 0px; 
-             margin-left: -15px; /* Pull active tab out slightly */
-             padding-left: 10px !important;
-             color: #4f46e5 !important; /* Active tab text color */
-        }
-        .st-emotion-cache-1cypcdb [aria-checked="true"] label {
-            color: #4f46e5 !important; /* Active tab text color */
-        }
-
 
         /* Horizontal rule color */
         hr {
@@ -323,15 +321,6 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
 def render_picklist_tab():
     
-    admin_header("📦 Master Pick List Compiler")
-
-    if 'raw_file_objects' not in st.session_state:
-        st.session_state.raw_file_objects = {}
-    if 'mapping_file_object' not in st.session_state:
-        st.session_state.mapping_file_object = None
-
-    # --- 1. SETUP & MAPPING FILE UPLOAD ---
-    
     st.subheader("1. Master SKU Mapping File Setup (REQUIRED)")
     st.markdown("Map **Channel SKU, Size, and Color** to your **Our SKU** for consolidation.")
     
@@ -346,7 +335,7 @@ def render_picklist_tab():
         st.session_state.mapping_file_object = mapping_file
     
     with col_map_download:
-        st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True) # Vertical spacing
+        st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True) 
         st.download_button(
             label="⬇️ Download Sample Mapping Template",
             data=get_sample_mapping_file(),
@@ -408,7 +397,7 @@ def render_picklist_tab():
         st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
 
     with col_submit:
-        st.markdown('<br>', unsafe_allow_html=True) # Vertical spacing
+        st.markdown('<br>', unsafe_allow_html=True) 
         
         if st.session_state.mapping_file_object is None:
             st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File (Section 1).")
@@ -428,7 +417,6 @@ def render_picklist_tab():
 # ==============================================================================
 
 def render_gst_tab():
-    admin_header("📊 GST Filing Tools")
     st.markdown("Tools to assist with GSTR-1 and GSTR-3B preparation.")
     st.markdown("---")
 
@@ -461,23 +449,18 @@ def main():
     # Inject CSS for Admin Panel Look
     inject_admin_panel_css()
 
-    # Sidebar Navigation
-    with st.sidebar:
-        st.markdown('<div style="margin-top: 1rem; font-size: 1.5rem; color: #4f46e5; font-weight: 700;">OPERATIONS HUB</div>', unsafe_allow_html=True)
-        st.markdown('<hr style="border-top: 1px solid #e5e7eb;">', unsafe_allow_html=True)
-        selected_tab = st.radio(
-            "Navigation:",
-            ["📦 Pick List Compiler", "📊 GST Filing Tools"],
-            format_func=lambda x: x.replace(" ", " • "),
-            key="main_navigation"
-        )
-        st.markdown("---")
-        st.info("Built for streamlined supplier operations.")
+    # Application Header and Tab Navigation
+    st.markdown('<div style="margin-top: -1.5rem; margin-bottom: 2rem; padding: 1rem 0; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);">'
+                f'<h1 style="color: #4f46e5; margin: 0; padding-left: 1.5rem;">Operations Hub</h1>'
+                '</div>', unsafe_allow_html=True)
 
-    # Render the selected tab
-    if selected_tab == "📦 Pick List Compiler":
+
+    tab1, tab2 = st.tabs(["📦 Pick List Compiler", "📊 GST Filing Tools"])
+
+    with tab1:
         render_picklist_tab()
-    elif selected_tab == "📊 GST Filing Tools":
+    
+    with tab2:
         render_gst_tab()
 
 if __name__ == "__main__":
