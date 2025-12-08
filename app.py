@@ -27,11 +27,11 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (NEW ADMIN PANEL CSS)
+# 2. UI/UX STYLING (NEW ADMIN PANEL CSS WITH VISIBILITY FIXES)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS to mimic the Soft UI Dashboard look."""
+    """Injects custom CSS to mimic the Soft UI Dashboard look with high contrast."""
     st.markdown(
         """
         <style>
@@ -40,10 +40,16 @@ def inject_admin_panel_css():
 
         /* --- Admin Panel Styling --- */
         
-        /* Main Container for overall background and spacing */
-        .stApp {
+        /* Set main text color to a dark shade for high contrast */
+        body, .stApp {
+            color: #344767; /* Dark blue/gray for primary text */
             background-color: #f8f9fa; /* Light gray background */
             padding-top: 1rem;
+        }
+
+        /* Set the color for all general text, ensuring contrast */
+        p, label, .stMarkdown, div[data-testid="stText"] {
+            color: #344767 !important;
         }
 
         /* Custom Card Styles (similar to Soft UI shadow and radius) */
@@ -56,9 +62,9 @@ def inject_admin_panel_css():
             margin-bottom: 1.5rem;
         }
 
-        /* Primary Button Style (Blue/Purple from template) */
+        /* Primary Button Style (Green submit button) */
         .stButton>button {
-            background-color: #4CAF50; /* Green submit button */
+            background-color: #4CAF50; 
             color: white;
             border-radius: 0.5rem;
             border: none;
@@ -73,7 +79,7 @@ def inject_admin_panel_css():
 
         /* Header Style */
         h1 {
-            color: #344767; /* Dark blue/gray header color */
+            color: #344767; 
             font-weight: 700;
             margin-bottom: 0.5rem;
             margin-top: 0;
@@ -83,28 +89,33 @@ def inject_admin_panel_css():
             color: #344767; 
             font-weight: 600;
         }
-
-        /* Metric styling */
+        
+        /* Metric styling: Ensure label and value are dark */
         div[data-testid="stMetric"] {
-            background-color: #f0f2f5; /* Lighter card for metrics */
+            background-color: #f0f2f5; 
             border-radius: 0.5rem;
             padding: 1rem;
             border: 1px solid #dee2e6;
         }
-        
-        /* File Uploader styling */
+        /* Metric value color (this was often invisible) */
+        div[data-testid="stMetricValue"] {
+            color: #344767 !important;
+        }
+        /* Metric label color */
+        div[data-testid="stMetricLabel"] label {
+            color: #344767 !important;
+            font-weight: 600;
+        }
+
+        /* File Uploader styling: Ensure label is dark */
         div[data-testid="stFileUploader"] label {
             font-weight: 600;
             color: #344767;
         }
-
-        /* Custom component for section headers (optional) */
-        .section-header {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #344767;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+        
+        /* Sidebar Navigation Fix: Ensure radio button text is visible */
+        .st-emotion-cache-1cypcdb label {
+            color: #344767 !important;
         }
 
         /* Horizontal rule color */
@@ -129,7 +140,6 @@ def admin_header(title):
 # ==============================================================================
 
 def read_uploaded_file(uploaded_file, name):
-    # ... (unchanged)
     """Reads a file object into a Pandas DataFrame."""
     try:
         if uploaded_file.name.lower().endswith('.csv'):
@@ -142,7 +152,6 @@ def read_uploaded_file(uploaded_file, name):
         return None
 
 def get_sample_mapping_file():
-    # ... (unchanged)
     """Generates a sample Excel file for the SKU mapping template."""
     sample_data = {
         MAP_CHANNEL_SKU_COL: ['COMP-D101', 'COMP-D101', 'COMP-D102', 'COMP-D101'],
@@ -159,7 +168,6 @@ def get_sample_mapping_file():
     return output.getvalue()
 
 def get_sample_picklist_file():
-    # ... (unchanged)
     """Generates a sample picklist file for the Listing Compiler channel."""
     config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
     
@@ -178,7 +186,6 @@ def get_sample_picklist_file():
 
 
 def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
-    # ... (unchanged)
     """Handles the heavy lifting of reading, mapping, and summing the data."""
     if uploaded_pick_list_count == 0:
         st.error("No pick list files were uploaded. Please upload at least one pick list file to run consolidation.")
@@ -266,7 +273,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
         final_compiled_picklist = final_compiled_picklist.sort_values(by=MAP_OUR_SKU_COL)
 
         # 4. Display and Download
-        st.markdown('<div class="section-header">Final Master Pick List</div>', unsafe_allow_html=True)
+        st.subheader("✅ Final Master Pick List by Our SKU")
         
         st.dataframe(final_compiled_picklist, use_container_width=True)
 
@@ -289,16 +296,14 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
 def render_picklist_tab():
     
-    # Use custom header for admin look
     admin_header("📦 Master Pick List Compiler")
 
-    # Session state for managing all uploaded file objects and mapping file
     if 'raw_file_objects' not in st.session_state:
         st.session_state.raw_file_objects = {}
     if 'mapping_file_object' not in st.session_state:
         st.session_state.mapping_file_object = None
 
-    # --- 1. SETUP & MAPPING FILE UPLOAD (CARD 1) ---
+    # --- 1. SETUP & MAPPING FILE UPLOAD ---
     
     st.subheader("1. Master SKU Mapping File Setup (REQUIRED)")
     st.markdown("Map **Channel SKU, Size, and Color** to your **Our SKU** for consolidation.")
@@ -314,7 +319,7 @@ def render_picklist_tab():
         st.session_state.mapping_file_object = mapping_file
     
     with col_map_download:
-        st.markdown("") # Spacing
+        st.markdown("") 
         st.download_button(
             label="⬇️ Download Sample Mapping Template",
             data=get_sample_mapping_file(),
@@ -325,7 +330,7 @@ def render_picklist_tab():
 
     st.markdown("---")
     
-    # --- 2. LISTING COMPILER UPLOADS (CARD 2) ---
+    # --- 2. LISTING COMPILER UPLOADS ---
 
     st.subheader(f"2. {THE_ONLY_CHANNEL} Pick List Uploads (10 Accounts)")
     
@@ -343,7 +348,7 @@ def render_picklist_tab():
 
     # Uploader section for the 10 accounts
     accounts_to_upload = MASTER_ACCOUNT_NAMES
-    cols = st.columns(3) # Display 3 uploaders per row
+    cols = st.columns(3) 
 
     for j, account_name in enumerate(accounts_to_upload):
         unique_key = f"{THE_ONLY_CHANNEL}_{account_name.replace(' ', '_')}"
@@ -355,7 +360,6 @@ def render_picklist_tab():
                 key=unique_key
             )
             
-            # Store the file object with account name
             st.session_state.raw_file_objects[unique_key] = {
                 'file': uploaded_file,
                 'channel': THE_ONLY_CHANNEL,
@@ -364,26 +368,24 @@ def render_picklist_tab():
 
     st.markdown("---")
 
-    # --- 3. CONSOLIDATION & SUBMIT (CARD 3) ---
+    # --- 3. CONSOLIDATION & SUBMIT ---
     
     st.subheader("3. Consolidate and Generate Pick List")
     
     TOTAL_POTENTIAL_UPLOADS = len(MASTER_ACCOUNT_NAMES) 
     uploaded_pick_list_count = sum(1 for item in st.session_state.raw_file_objects.values() if item['file'] is not None)
 
-    # Display Metrics and Submit Button in columns for better layout
     col_metric, col_submit = st.columns([1, 2])
 
     with col_metric:
         st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
 
     with col_submit:
-        st.markdown('<br>', unsafe_allow_html=True) # Vertical spacing
-        # Mandatory Check 1: Mapping File
+        st.markdown('<br>', unsafe_allow_html=True) 
+        
         if st.session_state.mapping_file_object is None:
             st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File (Section 1).")
         
-        # Mandatory Check 2: At least one Pick List
         elif uploaded_pick_list_count >= 1:
             st.success("✅ All requirements met! Click Submit to generate.")
             
@@ -432,13 +434,12 @@ def main():
     # Inject CSS for Admin Panel Look
     inject_admin_panel_css()
 
-    # Sidebar Navigation (Soft UI uses a distinct sidebar, but here we use Streamlit's native one)
+    # Sidebar Navigation
     with st.sidebar:
         st.title("Operations Menu")
         selected_tab = st.radio(
             "Go to:",
             ["📦 Pick List Compiler", "📊 GST Filing Tools"],
-            # Use a slightly different icon to match the Soft UI feel
             format_func=lambda x: x.replace(" ", " • ")
         )
         st.markdown("---")
