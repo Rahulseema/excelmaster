@@ -34,8 +34,6 @@ PICKLIST_QTY_COL = 'Qty'
 
 # Configuration for Pick List Column Names by Channel
 # !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
-# Adjust the values in 'sku', 'size', 'color', 'qty' to match the EXACT column headers 
-# in the reports you download from each respective channel.
 CHANNEL_COLUMNS_MAP = {
     "Meesho": {'sku': 'SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'Quantity'}, # Example Meesho names
     "Amazon": {'sku': 'item-sku', 'size': 'size-attribute', 'color': 'color-attribute', 'qty': 'quantity-purchased'}, 
@@ -82,9 +80,13 @@ def get_sample_mapping_file():
     return output.getvalue()
 
 
-def process_consolidation(raw_file_objects, mapping_file_object):
+def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
     """Handles the heavy lifting of reading, mapping, and summing the data."""
-    with st.spinner("Processing 40+ files... Reading, cleaning, merging, and consolidating data."):
+    if uploaded_pick_list_count == 0:
+        st.error("No pick list files were uploaded. Please upload at least one pick list file to run consolidation.")
+        return
+
+    with st.spinner(f"Processing {uploaded_pick_list_count} files... Reading, cleaning, merging, and consolidating data."):
         
         # Read Mapping File
         mapping_df = read_uploaded_file(mapping_file_object, "Mapping File")
@@ -94,7 +96,7 @@ def process_consolidation(raw_file_objects, mapping_file_object):
         
         # 1. Process and Clean all Channel DataFrames
         for key, item in raw_file_objects.items():
-            if item['file'] is None: continue 
+            if item['file'] is None: continue # Skip if no file was uploaded (NEW LOGIC)
             
             df = read_uploaded_file(item['file'], f"{item['channel']} - {item['account']}")
             if df is not None:
@@ -140,7 +142,7 @@ def process_consolidation(raw_file_objects, mapping_file_object):
             MAP_CHANNEL_SKU_COL, 
             MAP_CHANNEL_SIZE_COL, 
             MAP_CHANNEL_COLOR_COL, 
-            MAP_OUR_SKU_COL # Group by 'Our SKU' to sum different channel SKUs for the same master product
+            MAP_OUR_SKU_COL 
         ])[PICKLIST_QTY_COL].sum().reset_index()
         
         final_compiled_picklist.rename(
@@ -180,8 +182,8 @@ def process_consolidation(raw_file_objects, mapping_file_object):
 # ==============================================================================
 
 def render_picklist_tab():
-    st.title("📦 44-File Multi-Channel Master Pick List Compiler")
-    st.markdown("Upload reports for **44 accounts/channels** and click **Submit** to consolidate.")
+    st.title("📦 Multi-Channel Master Pick List Compiler")
+    st.markdown("Upload **Mapping File (Required)** and **at least one** Pick List file to consolidate.")
     st.markdown("---")
 
     # Session state for managing all uploaded file objects and mapping file
@@ -197,7 +199,7 @@ def render_picklist_tab():
     
     # 1. SETUP TAB (MAPPING FILE)
     with tabs[0]:
-        st.header("1. Master SKU Mapping File Setup")
+        st.header("1. Master SKU Mapping File Setup (REQUIRED)")
         st.markdown("This file requires **Channel SKU, Size, and Color** to map to your **Our SKU**.")
         
         mapping_file = st.file_uploader(
@@ -256,28 +258,32 @@ def render_picklist_tab():
 
     # --- SUBMIT BUTTON & PROCESSING LOGIC TRIGGER ---
     
+    # Calculate total potential uploads (for display only)
     total_multi_uploads = len(MULTI_ACCOUNT_CHANNELS) * len(MASTER_ACCOUNT_NAMES)
     total_single_uploads = len(SINGLE_ACCOUNT_CHANNELS)
-    REQUIRED_FILE_COUNT = total_multi_uploads + total_single_uploads
+    TOTAL_POTENTIAL_UPLOADS = total_multi_uploads + total_single_uploads
     
+    # Count how many pick list files were actually uploaded
     uploaded_pick_list_count = sum(1 for item in st.session_state.raw_file_objects.values() if item['file'] is not None)
 
     st.subheader("3. Consolidate Files and Generate Pick List")
     
     if st.session_state.mapping_file_object is None:
-        st.error("Please upload the **Master SKU Mapping File** in the Setup tab (Step 1).")
+        st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File in the Setup tab (Step 1).")
         return
         
-    st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Required: {REQUIRED_FILE_COUNT}")
+    st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
     
-    if uploaded_pick_list_count == REQUIRED_FILE_COUNT:
-        st.success("All files are ready! Click Submit to generate the master pick list.")
+    # Check for mandatory requirements: Mapping File + at least 1 Pick List
+    if uploaded_pick_list_count >= 1:
+        st.success("All requirements met! Click Submit to generate the master pick list.")
         
         if st.button("🚀 **SUBMIT: Generate Master Pick List**", type="primary", use_container_width=True):
-            process_consolidation(st.session_state.raw_file_objects, st.session_state.mapping_file_object)
+            # Pass the count to the processing function for use in the spinner/error check
+            process_consolidation(st.session_state.raw_file_objects, st.session_state.mapping_file_object, uploaded_pick_list_count)
     
     else:
-        st.info("Upload status: Please complete the remaining file uploads in the channel tabs.")
+        st.info("🟡 **Pick List Required:** Please upload at least one pick list file in the channel tabs.")
 
 
 # ==============================================================================
