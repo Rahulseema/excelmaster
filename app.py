@@ -39,122 +39,141 @@ MAIN_SERVICES = {
 GSTR1_SUB_CHANNELS = ["Meesho", "Flipkart", "Amazon"]
 
 # ==============================================================================
-# 2. UI/UX STYLING (PASTEL ADMIN CSS - Sidebar Focused) - MODIFIED
+# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - HEAVILY MODIFIED
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS for a soft, low-contrast pastel theme, optimized for sidebar."""
+    """Injects custom CSS for a Phoenix-inspired, fixed-sidebar pastel theme."""
     st.markdown(
         """
         <style>
         /* Base Streamlit Overrides */
         #MainMenu, footer, header {visibility: hidden;}
 
-        /* --- Pastel Admin Styling --- */
+        /* --- Pastel Phoenix Styling --- */
         
         /* Base Colors & Text */
         :root, body, .stApp {
             color: #3f516d !important; /* Deep slate blue for high-contrast text */
-            background-color: #fcfdff; /* Very soft white/cream background */
+            background-color: #f5f8fb; /* Light, slightly cool gray background for main content */
         }
         
-        /* Sidebar Styling */
+        /* Sidebar Styling: Fixed, Full Height, and Clean */
         [data-testid="stSidebar"] {
             background-color: #ffffff; /* White sidebar background */
             border-right: 1px solid #e3eaf3;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+            box-shadow: 1px 0 5px rgba(0, 0, 0, 0.05);
+            position: fixed; /* Fixes the sidebar position */
+            height: 100vh; /* Full viewport height */
+            padding-top: 0; /* Remove top padding */
         }
-
+        
         /* Sidebar Header/Title */
         [data-testid="stSidebar"] h1 {
             color: #71a5cc; /* Soft Pastel Blue */
             font-size: 1.5rem;
-            padding: 1rem 1.5rem 0.5rem 1.5rem;
+            padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             margin-bottom: 0.5rem;
+            border-bottom: 1px solid #f0f8ff; /* Subtle separation */
         }
-
-        /* --- EXPANDER/MENU HEADER STYLING (IMPROVED VISIBILITY) --- */
+        
+        /* --- EXPANDER/MENU HEADER STYLING --- */
         div[data-testid="stExpander"] button {
-            color: #3f516d !important; /* Darker text for high contrast */
-            font-weight: 700 !important; /* Bolder text for visibility */
+            color: #3f516d !important; 
+            font-weight: 700 !important;
             padding: 0.5rem 0rem 0.5rem 1.5rem; 
             border-radius: 4px;
         }
         div[data-testid="stExpander"] button:hover {
-            background-color: #f0f8ff; /* Light blue on hover */
+            background-color: #f0f8ff; 
         }
         
         /* Adjust Expander Icon/Arrow */
         div[data-testid="stExpanderIcon"] {
-            color: #3f516d; /* Darker arrow for better visibility */
-            font-size: 1.2rem; /* Slightly larger icon */
+            color: #3f516d; 
+            font-size: 1.2rem;
         }
-        /* ------------------------------------------------------------- */
         
-        /* Radio Button / Navigation Links (Mimicking the image style) */
+        /* Radio Button / Navigation Links (Subtle, Clean) */
         div[data-testid="stRadio"] label {
-            padding: 0.3rem 0rem 0.3rem 2.5rem; /* Indentation for sub-links */
-            margin-left: -1rem; /* Adjust horizontal position */
+            padding: 0.3rem 0rem 0.3rem 2.5rem; 
+            margin-left: -1rem; 
             width: 100%;
             border-radius: 4px;
             font-weight: 500;
-            color: #5890b9; /* Slightly softer text for sub-links */
+            color: #5890b9; 
         }
         div[data-testid="stRadio"] label:hover {
-            background-color: #f0f8ff; 
+            background-color: #e6f1f8; /* Very light blue on hover */
         }
 
-        /* Highlight Active Radio Button */
-        div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
-            /* Hide the actual radio circle/dot */
-            display: none !important;
+        /* Active Link Text Styling (More pronounced indicator) */
+        div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
+            background-color: #e6f1f8 !important; 
+            color: #3f516d !important; 
+            font-weight: 600 !important;
+            border-left: 4px solid #71a5cc; /* Thicker pastel blue bar */
         }
         
-        /* Active Link Text Styling */
-        div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
-            background-color: #e6f1f8 !important; /* Very light active background */
-            color: #3f516d !important; /* Dark text for active link */
-            font-weight: 600 !important;
-            border-left: 3px solid #71a5cc; /* Pastel blue indicator bar */
+        /* Hide the radio circle/dot */
+        div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
+            display: none !important;
         }
 
-
-        /* --- Main Content Styling (Kept Pastel) --- */
+        /* --- Main Content Styling (Clean, Card-Based) --- */
         .block-container {
             padding-top: 2rem;
             padding-left: 2rem; 
+            padding-right: 2rem; 
+            padding-bottom: 5rem;
         }
 
+        /* Headers */
         h1 {
             color: #71a5cc; 
             font-weight: 700;
+            margin-bottom: 1.5rem;
         }
         h2, h3, h4 {
             color: #5890b9; 
             font-weight: 600;
         }
 
-        /* Custom Card Styles */
-        div[data-testid="stVerticalBlock"], div[data-testid="stHorizontalBlock"] {
+        /* Custom Card Styles: Clean, Phoenix-style container */
+        div[data-testid="stVerticalBlock"], 
+        div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 10px; 
-            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); 
+            border-radius: 6px; /* Sharper corners */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Lighter, cleaner shadow */
             border: 1px solid #e3eaf3; 
             background: white;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         
-        /* Button Style (Soft Green) */
+        /* Primary Button Style (Soft Green) */
         .stButton>button {
             background-color: #a8d5ba;
             color: #3f516d !important;
-            border-radius: 8px;
+            border-radius: 6px; /* Sharper button corners */
             border: 1px solid #94c7a6;
             padding: 0.6rem 1.2rem;
             font-weight: bold;
+            box-shadow: none; /* Keep buttons clean */
         }
         .stButton>button:hover {
             background-color: #94c7a6;
+        }
+
+        /* File Uploader styling */
+        div[data-testid*="stFileUploader"] {
+            background-color: #fcfdff; 
+            border: 1px dashed #c8d9e6;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        /* Hide the radio circle/dot everywhere */
+        .stRadio div[data-baseweb="radio"] div:first-child {
+            display: none;
         }
 
         </style>
@@ -327,7 +346,6 @@ def setup_sidebar_navigation():
         st.session_state.current_page = "Consolidation Tool"
 
     # --- LISTING COMPILER Section ---
-    # NOTE: st.sidebar.expander creates a collapsable section in the sidebar.
     with st.sidebar.expander("📦 Listing Compiler", expanded=True):
         
         compiler_options = [
@@ -365,7 +383,6 @@ def setup_sidebar_navigation():
     with st.sidebar.expander("📊 GSTR Filing", expanded=True):
         
         # GSTR1 Sub-menu (Nested Expander)
-        # NOTE: This nested st.expander is the secondary collapsible item.
         with st.expander("GSTR1"):
             gstr1_options = GSTR1_SUB_CHANNELS
             
@@ -409,7 +426,7 @@ def setup_sidebar_navigation():
 def main():
     st.set_page_config(page_title="Operations Dashboard", layout="wide")
     
-    # 1. Inject CSS for the Pastel Sidebar Look
+    # 1. Inject CSS for the Phoenix-Inspired Look
     inject_admin_panel_css()
 
     # 2. Setup Sidebar Navigation
