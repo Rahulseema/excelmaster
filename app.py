@@ -90,6 +90,7 @@ def get_sample_picklist_file():
 def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
     """Handles the heavy lifting of reading, mapping, and summing the data."""
     if uploaded_pick_list_count == 0:
+        # This check should ideally not be hit if the submit button check works, but kept for safety
         st.error("No pick list files were uploaded. Please upload at least one pick list file to run consolidation.")
         return
 
@@ -192,12 +193,12 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
 
 # ==============================================================================
-# 3. PICK LIST COMPILER TAB FUNCTION
+# 3. PICK LIST COMPILER TAB FUNCTION (CONSOLIDATED)
 # ==============================================================================
 
 def render_picklist_tab():
     st.title("📦 Master Pick List Compiler")
-    st.markdown("Upload **Mapping File (Required)** and **at least one** Pick List file to consolidate.")
+    st.markdown("Upload **Mapping File (Required)** and **at least one** Pick List file to consolidate all 10 accounts.")
     st.markdown("---")
 
     # Session state for managing all uploaded file objects and mapping file
@@ -206,90 +207,89 @@ def render_picklist_tab():
     if 'mapping_file_object' not in st.session_state:
         st.session_state.mapping_file_object = None
 
-    # --- SETUP & UPLOADING TABS ---
+    # --- 1. SETUP & MAPPING FILE UPLOAD (TOP SECTION) ---
     
-    tab_titles = ["1. Setup & Mapping", "2. Listing Compiler Upload"]
-    tabs = st.tabs(tab_titles)
+    st.header("1. Master SKU Mapping File Setup (REQUIRED)")
+    st.markdown("This file requires **Channel SKU, Size, and Color** to map to your **Our SKU**.")
     
-    # 1. SETUP TAB (MAPPING FILE)
-    with tabs[0]:
-        st.header("1. Master SKU Mapping File Setup (REQUIRED)")
-        st.markdown("This file requires **Channel SKU, Size, and Color** to map to your **Our SKU**.")
-        
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
         mapping_file = st.file_uploader(
             f"Upload Master Mapping File (CSV/Excel)",
             type=ALLOWED_FILE_TYPES,
             key="file_uploader_mapping"
         )
         st.session_state.mapping_file_object = mapping_file
-        
-        st.markdown("---")
-        
+    
+    with col2:
+        st.markdown("") # Spacing
         # Sample Download Option for Mapping File
-        st.subheader("Download Sample Mapping Template")
         st.download_button(
-            label="Download Sample Mapping File (Excel)",
+            label="⬇️ Download Sample Mapping Template",
             data=get_sample_mapping_file(),
             file_name='sample_sku_mapping_template.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            use_container_width=True
         )
-        
-        if mapping_file:
-            st.success("Mapping file uploaded. Proceed to upload pick lists.")
+
+    st.markdown("---")
     
-    # 2. UPLOADING TAB (The Single Channel)
-    with tabs[1]: 
-        st.header(f"Upload Pick Lists for **{THE_ONLY_CHANNEL}**")
-        
-        config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
-        st.info(f"All 10 accounts must use these column headers: **SKU**: `{config['sku']}`, **Size**: `{config['size']}`, **Color**: `{config['color']}`, **Qty**: `{config['qty']}`.")
+    # --- 2. LISTING COMPILER UPLOADS ---
 
-        # Sample Download Option for Pick List
-        st.subheader("Download Sample Pick List Template")
-        st.download_button(
-            label=f"Download {THE_ONLY_CHANNEL} Sample Template (Excel)",
-            data=get_sample_picklist_file(),
-            file_name=f'sample_{THE_ONLY_CHANNEL.lower().replace(" ", "_")}_picklist.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        st.markdown("---")
-
-        accounts_to_upload = MASTER_ACCOUNT_NAMES
-        cols = st.columns(3) # Display 3 uploaders per row
-
-        for j, account_name in enumerate(accounts_to_upload):
-            unique_key = f"{THE_ONLY_CHANNEL}_{account_name.replace(' ', '_')}"
-            
-            with cols[j % 3]: # Use modulo 3 for cycling through the 3 columns
-                uploaded_file = st.file_uploader(
-                    f"**{account_name}** Pick List",
-                    type=ALLOWED_FILE_TYPES,
-                    key=unique_key
-                )
-                
-                # Store the file object with account name
-                st.session_state.raw_file_objects[unique_key] = {
-                    'file': uploaded_file,
-                    'channel': THE_ONLY_CHANNEL,
-                    'account': account_name
-                }
+    st.header(f"2. {THE_ONLY_CHANNEL} Pick List Uploads (10 Accounts)")
     
+    config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
+    st.info(f"All 10 accounts must use these column headers: **SKU**: `{config['sku']}`, **Size**: `{config['size']}`, **Color**: `{config['color']}`, **Qty**: `{config['qty']}`.")
+
+    # Sample Download Option for Pick List
+    st.download_button(
+        label=f"⬇️ Download {THE_ONLY_CHANNEL} Sample Template (Excel)",
+        data=get_sample_picklist_file(),
+        file_name=f'sample_{THE_ONLY_CHANNEL.lower().replace(" ", "_")}_picklist.xlsx',
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
     st.markdown("---")
 
-    # --- SUBMIT BUTTON & PROCESSING LOGIC TRIGGER ---
+    # Uploader section for the 10 accounts
+    accounts_to_upload = MASTER_ACCOUNT_NAMES
+    cols = st.columns(3) # Display 3 uploaders per row
+
+    for j, account_name in enumerate(accounts_to_upload):
+        unique_key = f"{THE_ONLY_CHANNEL}_{account_name.replace(' ', '_')}"
+        
+        with cols[j % 3]: 
+            uploaded_file = st.file_uploader(
+                f"**{account_name}** Pick List",
+                type=ALLOWED_FILE_TYPES,
+                key=unique_key
+            )
+            
+            # Store the file object with account name
+            st.session_state.raw_file_objects[unique_key] = {
+                'file': uploaded_file,
+                'channel': THE_ONLY_CHANNEL,
+                'account': account_name
+            }
+
+    st.markdown("---")
+
+    # --- 3. SUBMIT BUTTON & PROCESSING LOGIC TRIGGER ---
     
-    TOTAL_POTENTIAL_UPLOADS = len(MASTER_ACCOUNT_NAMES) # 10 accounts total
+    TOTAL_POTENTIAL_UPLOADS = len(MASTER_ACCOUNT_NAMES) 
     
     uploaded_pick_list_count = sum(1 for item in st.session_state.raw_file_objects.values() if item['file'] is not None)
 
     st.subheader("3. Consolidate Files and Generate Pick List")
     
+    # Mandatory Check 1: Mapping File
     if st.session_state.mapping_file_object is None:
-        st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File in the Setup tab (Step 1).")
+        st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File (Section 1).")
         return
-        
+    
     st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
     
+    # Mandatory Check 2: At least one Pick List
     if uploaded_pick_list_count >= 1:
         st.success("All requirements met! Click Submit to generate the master pick list.")
         
@@ -297,7 +297,7 @@ def render_picklist_tab():
             process_consolidation(st.session_state.raw_file_objects, st.session_state.mapping_file_object, uploaded_pick_list_count)
     
     else:
-        st.info("🟡 **Pick List Required:** Please upload at least one pick list file in the Listing Compiler Upload tab.")
+        st.info("🟡 **Pick List Required:** Please upload at least one pick list file (Section 2).")
 
 
 # ==============================================================================
