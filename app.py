@@ -34,8 +34,10 @@ PICKLIST_QTY_COL = 'Qty'
 
 # Configuration for Pick List Column Names by Channel
 # !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
+# Adjust the values in 'sku', 'size', 'color', 'qty' to match the EXACT column headers 
+# in the reports you download from each respective channel.
 CHANNEL_COLUMNS_MAP = {
-    "Meesho": {'sku': 'SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'Quantity'}, # Example Meesho names
+    "Meesho": {'sku': 'SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'Quantity'}, 
     "Amazon": {'sku': 'item-sku', 'size': 'size-attribute', 'color': 'color-attribute', 'qty': 'quantity-purchased'}, 
     "Flipkart": {'sku': 'Seller SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'quantity-purchased'},
     "Myntra": {'sku': 'Seller SKU', 'size': 'Style Size', 'color': 'Color Name', 'qty': 'Quantity'},
@@ -79,6 +81,23 @@ def get_sample_mapping_file():
         sample_df.to_excel(writer, index=False, sheet_name='Sample_Mapping')
     return output.getvalue()
 
+def get_sample_picklist_file(channel_name):
+    """Generates a sample picklist file for a specific channel based on its column map."""
+    config = CHANNEL_COLUMNS_MAP[channel_name]
+    
+    sample_data = {
+        config['sku']: [f'{channel_name[:3]}-A101', f'{channel_name[:3]}-B202'],
+        config['size']: ['S', 'L'],
+        config['color']: ['Black', 'White'],
+        config['qty']: [5, 3]
+    }
+    sample_df = pd.DataFrame(sample_data)
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        sample_df.to_excel(writer, index=False, sheet_name='Sample_Picklist')
+    return output.getvalue()
+
 
 def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
     """Handles the heavy lifting of reading, mapping, and summing the data."""
@@ -96,7 +115,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
         
         # 1. Process and Clean all Channel DataFrames
         for key, item in raw_file_objects.items():
-            if item['file'] is None: continue # Skip if no file was uploaded (NEW LOGIC)
+            if item['file'] is None: continue 
             
             df = read_uploaded_file(item['file'], f"{item['channel']} - {item['account']}")
             if df is not None:
@@ -211,7 +230,7 @@ def render_picklist_tab():
         
         st.markdown("---")
         
-        # Sample Download Option
+        # Sample Download Option for Mapping File
         st.subheader("Download Sample Mapping Template")
         st.download_button(
             label="Download Sample Mapping File (Excel)",
@@ -229,7 +248,18 @@ def render_picklist_tab():
             st.header(f"Upload Pick Lists for **{channel_name}**")
             
             config = CHANNEL_COLUMNS_MAP.get(channel_name)
-            st.info(f"Expected SKU Col: `{config['sku']}` | Size: `{config['size']}` | Color: `{config['color']}` | Qty: `{config['qty']}`")
+            st.info(f"The system is expecting the following column headers in your uploaded report: **SKU**: `{config['sku']}`, **Size**: `{config['size']}`, **Color**: `{config['color']}`, **Qty**: `{config['qty']}`.")
+
+            # Sample Download Option for Pick List
+            st.subheader("Download Sample Pick List Template")
+            st.download_button(
+                label=f"Download {channel_name} Sample Template (Excel)",
+                data=get_sample_picklist_file(channel_name),
+                file_name=f'sample_{channel_name.lower().replace(" ", "_")}_picklist.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            st.markdown("---")
+
 
             if channel_name in MULTI_ACCOUNT_CHANNELS:
                 accounts_to_upload = MASTER_ACCOUNT_NAMES
@@ -258,12 +288,10 @@ def render_picklist_tab():
 
     # --- SUBMIT BUTTON & PROCESSING LOGIC TRIGGER ---
     
-    # Calculate total potential uploads (for display only)
     total_multi_uploads = len(MULTI_ACCOUNT_CHANNELS) * len(MASTER_ACCOUNT_NAMES)
     total_single_uploads = len(SINGLE_ACCOUNT_CHANNELS)
     TOTAL_POTENTIAL_UPLOADS = total_multi_uploads + total_single_uploads
     
-    # Count how many pick list files were actually uploaded
     uploaded_pick_list_count = sum(1 for item in st.session_state.raw_file_objects.values() if item['file'] is not None)
 
     st.subheader("3. Consolidate Files and Generate Pick List")
@@ -274,12 +302,10 @@ def render_picklist_tab():
         
     st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
     
-    # Check for mandatory requirements: Mapping File + at least 1 Pick List
     if uploaded_pick_list_count >= 1:
         st.success("All requirements met! Click Submit to generate the master pick list.")
         
         if st.button("🚀 **SUBMIT: Generate Master Pick List**", type="primary", use_container_width=True):
-            # Pass the count to the processing function for use in the spinner/error check
             process_consolidation(st.session_state.raw_file_objects, st.session_state.mapping_file_object, uploaded_pick_list_count)
     
     else:
