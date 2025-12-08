@@ -6,31 +6,32 @@ from io import BytesIO
 # 1. CONFIGURATION SECTION (CRITICAL: ADJUST COLUMN NAMES HERE!)
 # ==============================================================================
 
-# Your 9 Meesho Account Names
-MEESHO_ACCOUNT_NAMES = [
-    "Drench", "Drench India", "Sparsh", "Sparsh SC", "Shine Arc",
-    "Ansh ent", "BnB Industries", "Shopforher", "AV Enterprises"
+# Your 9 distinct Marketplace Channels
+ALL_MARKETPLACE_CHANNELS = [
+    "Meesho",
+    "Amazon",
+    "Flipkart",
+    "Myntra",
+    "Nykaa",
+    "Channel 6 (Placeholder)",
+    "Channel 7 (Placeholder)",
+    "Channel 8 (Placeholder)",
+    "Channel 9 (Placeholder)",
 ]
-
-# Master list of all NON-MEESHO Channels (assuming one account for these)
-OTHER_CHANNELS = ["Amazon", "Flipkart", "Myntra", "Nykaa"]
-
-# Full list of all required pick list uploads
-ALL_PICKLIST_UPLOADS = (
-    [{"channel": "Meesho", "account": name} for name in MEESHO_ACCOUNT_NAMES] +
-    [{"channel": channel, "account": f"{channel} - Main"} for channel in OTHER_CHANNELS]
-)
 
 # Configuration for Pick List Column Names by Channel
 # !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
-# Search results confirm 'sku', 'quantity-purchased' for Amazon FBM reports.
-# Use 'Seller SKU ID' for Flipkart. Myntra/Nykaa often use 'Seller SKU' / 'Quantity'.
+# If a channel is not working, check the 'sku' and 'qty' values below.
 CHANNEL_COLUMNS_MAP = {
     "Meesho": {'sku': 'SKU ID', 'qty': 'Quantity'},
     "Amazon": {'sku': 'sku', 'qty': 'quantity-purchased'}, 
     "Flipkart": {'sku': 'Seller SKU ID', 'qty': 'quantity-purchased'},
     "Myntra": {'sku': 'Seller SKU', 'qty': 'Quantity'},
-    "Nykaa": {'sku': 'Seller Code', 'qty': 'Inventory Qty'}, # Inventory/Sale Report often uses these names
+    "Nykaa": {'sku': 'Seller Code', 'qty': 'Inventory Qty'}, 
+    "Channel 6 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
+    "Channel 7 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
+    "Channel 8 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
+    "Channel 9 (Placeholder)": {'sku': 'Item SKU', 'qty': 'Order Qty'},
 }
 
 # Mapping file column names (as provided by user):
@@ -41,17 +42,24 @@ MAP_ACCOUNT_COL = 'Account name'
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # --- Helper Function to Read File ---
-def read_uploaded_file(uploaded_file):
+def read_uploaded_file(uploaded_file, channel_name):
     """Reads a file object into a Pandas DataFrame."""
     try:
+        # Pass the file object directly to Pandas functions
         if uploaded_file.name.lower().endswith('.csv'):
-            return pd.read_csv(uploaded_file)
+            df = pd.read_csv(uploaded_file)
         elif uploaded_file.name.lower().endswith('.xlsx'):
-            return pd.read_excel(uploaded_file, engine='openpyxl')
-        return None
+            df = pd.read_excel(uploaded_file, engine='openpyxl')
+        else:
+            st.error(f"Unsupported file type for {channel_name}.")
+            return None
+        
+        # Add metadata before returning
+        df['Channel'] = channel_name
+        return df
+        
     except Exception as e:
-        st.error(f"Error reading file **{uploaded_file.name}**: {type(e).__name__} - {e}")
-        st.warning("Ensure the file is not corrupted and is a valid CSV/Excel format.")
+        st.error(f"Error reading file for **{channel_name}**: {type(e).__name__} - {e}")
         return None
 
 # ==============================================================================
@@ -60,114 +68,109 @@ def read_uploaded_file(uploaded_file):
 
 def render_picklist_tab():
     st.title("📦 Multi-Channel Master Pick List Compiler")
-    st.markdown("Combines pick lists from **13 uploads** and maps them to your master D SKU.")
+    st.markdown("Upload reports for your 9 channels and consolidate into a single pick list using your **D SKU**.")
     st.markdown("---")
 
-    uploaded_data = []
+    # The first tab is for Consolidation/Mapping, the rest are for uploading.
+    tab_titles = ["Consolidate & Map"] + ALL_MARKETPLACE_CHANNELS
+    
+    # st.tabs creates the horizontal tabs interface
+    tabs = st.tabs(tab_titles)
+    
+    # Dictionary to store all uploaded DataFrames
+    all_raw_dataframes = {}
 
-    # 1. UPLOAD MAPPING FILE
-    st.subheader("1️⃣ Master SKU Mapping File")
-    mapping_file = st.file_uploader(
-        f"Upload Master Mapping File ({MAP_CHANNEL_SKU_COL} | {MAP_D_SKU_COL} | {MAP_ACCOUNT_COL})",
-        type=ALLOWED_FILE_TYPES,
-        key="file_uploader_mapping"
-    )
-    is_mapping_file_uploaded = (mapping_file is not None)
-    st.markdown("---")
-
-
-    # 2. UPLOAD ALL PICK LISTS
-    st.subheader(f"2️⃣ Upload Channel Pick Lists (Total {len(ALL_PICKLIST_UPLOADS)} Files)")
-
-    cols = st.columns(3)
-    uploaded_files_map = {}
-    all_pick_lists_uploaded = True
-
-    # This loop generates the 13 individual upload widgets
-    with st.expander("Upload All Pick List Reports (9 Meesho + 4 Others)", expanded=True):
-        for i, item in enumerate(ALL_PICKLIST_UPLOADS):
-            channel = item["channel"]
-            account_name = item["account"]
+    # --- UPLOADING TABS ---
+    for i, channel_name in enumerate(ALL_MARKETPLACE_CHANNELS):
+        with tabs[i + 1]: # Start from the second tab (index 1)
+            st.subheader(f"Upload Pick List for **{channel_name}**")
             
-            # The 'Account name' from the mapping file must match the name used here for the merge to work correctly.
-            display_name = account_name if channel == "Meesho" else f"{channel}"
+            # Show the expected columns for clarity
+            config = CHANNEL_COLUMNS_MAP.get(channel_name, {'sku': 'N/A', 'qty': 'N/A'})
+            st.info(f"Expected SKU Column: `{config['sku']}` | Expected Quantity Column: `{config['qty']}`")
             
-            with cols[i % 3]: # Distribute across 3 columns
-                file = st.file_uploader(
-                    f"**{i+1}. {display_name}** ({channel} Pick List)",
-                    type=ALLOWED_FILE_TYPES,
-                    key=f"file_uploader_picklist_{i}"
-                )
-                uploaded_files_map[account_name] = {'file': file, 'channel': channel}
-                if file is None:
-                    all_pick_lists_uploaded = False
+            uploaded_file = st.file_uploader(
+                f"Upload {channel_name} Pick List (CSV/Excel)",
+                type=ALLOWED_FILE_TYPES,
+                key=f"file_uploader_{channel_name.replace(' ', '_')}"
+            )
 
-    st.markdown("---")
-
-    # --- PROCESSING LOGIC ---
-    if all_pick_lists_uploaded and is_mapping_file_uploaded:
-        st.subheader("3️⃣ Processing and Compilation")
-        st.success("All files uploaded! Compiling data and applying mapping...")
+            if uploaded_file:
+                df = read_uploaded_file(uploaded_file, channel_name)
+                if df is not None:
+                    all_raw_dataframes[channel_name] = df
+                    st.success(f"File for {channel_name} uploaded successfully!")
+                    
+    # --- CONSOLIDATE & MAP TAB (The Main Processing Logic) ---
+    with tabs[0]:
+        st.subheader("1️⃣ Master SKU Mapping File")
+        mapping_file = st.file_uploader(
+            f"Upload Master Mapping File ({MAP_CHANNEL_SKU_COL} | {MAP_D_SKU_COL} | {MAP_ACCOUNT_COL})",
+            type=ALLOWED_FILE_TYPES,
+            key="file_uploader_mapping"
+        )
+        st.markdown("---")
         
-        # Read Mapping File FIRST
-        mapping_df = read_uploaded_file(mapping_file)
-        if mapping_df is None:
-             st.error("Failed to read mapping file. Please check file format.")
-             return
+        # Check if all files needed are present
+        uploaded_channel_count = len(all_raw_dataframes)
+        required_channel_count = len(ALL_MARKETPLACE_CHANNELS)
 
-        # 1. Process all 13 Pick Lists
-        for account_name, upload_info in uploaded_files_map.items():
-            file = upload_info['file']
-            channel = upload_info['channel']
+        if uploaded_channel_count == required_channel_count and mapping_file:
+            st.success(f"All {required_channel_count} channel files and mapping file uploaded. Starting compilation...")
             
-            df = read_uploaded_file(file)
-            if df is not None:
-                config = CHANNEL_COLUMNS_MAP[channel]
+            # Read Mapping File
+            mapping_df = read_uploaded_file(mapping_file, "Mapping File")
+            if mapping_df is None:
+                 st.error("Failed to read mapping file.")
+                 return
+
+            processed_data = []
+            
+            # 1. Process and Clean all Channel DataFrames
+            for channel_name, df in all_raw_dataframes.items():
+                config = CHANNEL_COLUMNS_MAP[channel_name]
                 
                 try:
-                    # Rename and select necessary columns, add metadata
+                    # Rename columns to standard names for merging
                     df_clean = df.rename(columns={
                         config['sku']: MAP_CHANNEL_SKU_COL,
-                        config['qty']: 'Total Pick Quantity' # Use a temporary standard name
+                        config['qty']: 'Total Pick Quantity' 
                     })
                     
-                    df_clean = df_clean[[MAP_CHANNEL_SKU_COL, 'Total Pick Quantity']]
-                    df_clean['Channel'] = channel
-                    df_clean['Account'] = account_name
-                    uploaded_data.append(df_clean)
+                    # Keep only essential columns plus the Channel metadata
+                    df_clean = df_clean[[MAP_CHANNEL_SKU_COL, 'Total Pick Quantity', 'Channel']]
+                    processed_data.append(df_clean)
                     
                 except KeyError as e:
-                    st.error(f"Column Error in **{account_name}** ({channel}): Column **{e}** not found.")
-                    st.error(f"Expected SKU Column: '{config['sku']}'. Expected Quantity Column: '{config['qty']}'.")
-                    st.warning(f"You must update the `CHANNEL_COLUMNS_MAP` dictionary in the `app.py` script for the '{channel}' channel.")
-                    return # Stop processing on first error
+                    st.error(f"Column Mismatch in **{channel_name}**: Column {e} not found.")
+                    st.warning("Please correct the configuration in the `app.py` script and re-upload.")
+                    return # Stop processing on error
 
-        # 2. Final Consolidation and Mapping
-        if uploaded_data:
-            combined_picklist_df = pd.concat(uploaded_data, ignore_index=True)
+            # 2. Combine and Map
+            combined_picklist_df = pd.concat(processed_data, ignore_index=True)
 
-            # Merge Pick List with Mapping Table
+            # NOTE: We assume the 'Account name' in the mapping file corresponds to the 'Channel name'
+            # since we are uploading one aggregated pick list per channel.
             merged_df = pd.merge(
                 combined_picklist_df,
                 mapping_df[[MAP_CHANNEL_SKU_COL, MAP_D_SKU_COL, MAP_ACCOUNT_COL]],
-                left_on=[MAP_CHANNEL_SKU_COL, 'Account'],
+                left_on=[MAP_CHANNEL_SKU_COL, 'Channel'],
                 right_on=[MAP_CHANNEL_SKU_COL, MAP_ACCOUNT_COL],
                 how='left'
             )
             
-            # Handle unmapped SKUs (use Channel SKU as D SKU if D SKU is missing)
+            # Final Consolidation using the Master D SKU
             merged_df[MAP_D_SKU_COL] = merged_df[MAP_D_SKU_COL].fillna(merged_df[MAP_CHANNEL_SKU_COL])
 
-            # Final Consolidation using the Master D SKU
             final_compiled_picklist = merged_df.groupby(MAP_D_SKU_COL)['Total Pick Quantity'].sum().reset_index()
             final_compiled_picklist.rename(
                 columns={'Total Pick Quantity': 'Total Pick Quantity (D SKU)'},
                 inplace=True
             )
             final_compiled_picklist = final_compiled_picklist.sort_values(by=MAP_D_SKU_COL)
-
+            
             # 3. Display and Download
-            st.subheader("4️⃣ Final Master Pick List by D SKU")
+            st.subheader("✅ Final Master Pick List by D SKU")
             st.dataframe(final_compiled_picklist, use_container_width=True)
 
             output = BytesIO()
@@ -177,13 +180,18 @@ def render_picklist_tab():
             st.download_button(
                 label="⬇️ Download Master Pick List (Excel)",
                 data=output.getvalue(),
-                file_name='compiled_multi_channel_picklist.xlsx',
+                file_name='compiled_master_picklist.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-        
-    else:
-        st.warning("Please upload all required files to generate the compiled list.")
 
+        else:
+            # Display status summary for pending uploads
+            missing_files = [c for c in ALL_MARKETPLACE_CHANNELS if c not in all_raw_dataframes]
+            if mapping_file is None:
+                 st.warning("Mapping file is missing.")
+            if missing_files:
+                st.warning(f"Please upload pick lists for the following channels: **{', '.join(missing_files)}**")
+                
 # ==============================================================================
 # 3. GST FILING TOOLS TAB FUNCTION (UNCHANGED)
 # ==============================================================================
@@ -196,31 +204,17 @@ def render_gst_tab():
     with st.expander("GSTR-1 Preparation (Sales Summary)", expanded=False):
         st.markdown("Use this section to generate your monthly GSTR-1 summary, which details all **outward supplies (sales)**.")
         st.warning("Future Feature: Upload Sales Reports to generate HSN/GST summary.")
-        gstr1_file = st.file_uploader(
-            "Upload Monthly Sales Register (CSV/Excel)",
-            type=['csv', 'xlsx'],
-            key="gstr1_uploader"
-        )
-        if gstr1_file:
-            st.info(f"File '{gstr1_file.name}' uploaded for GSTR-1 analysis.")
+        gstr1_file = st.file_uploader("Upload Monthly Sales Register (CSV/Excel)", type=['csv', 'xlsx'], key="gstr1_uploader")
+        if gstr1_file: st.info(f"File '{gstr1_file.name}' uploaded for GSTR-1 analysis.")
 
     st.markdown("---")
 
     with st.expander("GSTR-3B Reconciliation (Summary & ITC)", expanded=False):
         st.markdown("Use this section for reconciling your Input Tax Credit (ITC) and summary tax liability.")
         st.warning("Future Feature: Upload GSTR-2A/2B for ITC reconciliation against your Purchase Register.")
-        gstr3b_sales_file = st.file_uploader(
-            "Upload GSTR-1 Summary Data (for comparison)",
-            type=['csv', 'xlsx'],
-            key="gstr3b_sales_uploader"
-        )
-        gstr3b_purchase_file = st.file_uploader(
-            "Upload Purchase/Expense Register (for ITC calculation)",
-            type=['csv', 'xlsx'],
-            key="gstr3b_purchase_uploader"
-        )
-        if gstr3b_sales_file and gstr3b_purchase_file:
-            st.info("Sales and Purchase files uploaded for GSTR-3B reconciliation.")
+        gstr3b_sales_file = st.file_uploader("Upload GSTR-1 Summary Data (for comparison)", type=['csv', 'xlsx'], key="gstr3b_sales_uploader")
+        gstr3b_purchase_file = st.file_uploader("Upload Purchase/Expense Register (for ITC calculation)", type=['csv', 'xlsx'], key="gstr3b_purchase_uploader")
+        if gstr3b_sales_file and gstr3b_purchase_file: st.info("Sales and Purchase files uploaded for GSTR-3B reconciliation.")
 
 # ==============================================================================
 # MAIN APP EXECUTION
