@@ -27,7 +27,7 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (MATDASH ADMIN CSS - Sidebar Removed)
+# 2. UI/UX STYLING (MATDASH ADMIN CSS - STICKY HEADER)
 # ==============================================================================
 
 def inject_admin_panel_css():
@@ -44,7 +44,7 @@ def inject_admin_panel_css():
         :root, body, .stApp {
             color: #1f2937 !important; /* Dark Slate Gray for primary text */
             background-color: #f8f9fa; /* Light gray background */
-            padding-top: 1.5rem;
+            padding-top: 0; /* Adjusted for sticky header */
         }
         
         /* General Text, Labels, Spans */
@@ -55,21 +55,32 @@ def inject_admin_panel_css():
             font-size: 1rem;
         }
         
-        /* Sidebar Removal (Important for tab format) */
+        /* Sticky Header Implementation */
+        .st-emotion-cache-1jm69f1 { /* Target the main container wrapping the header and tabs */
+            position: sticky;
+            top: 0;
+            z-index: 1000; /* Ensure it stays above scrolling content */
+            padding: 0; /* Remove default padding */
+        }
+        
+        /* Adjust the block container where the main content starts */
+        .block-container {
+            padding-top: 1rem;
+            padding-left: 2rem; 
+        }
+
+        /* Sidebar Removal */
         .st-emotion-cache-1g82m8b, .st-emotion-cache-1wmy991 { 
             visibility: hidden !important; 
             width: 0 !important;
         }
-        .block-container {
-            padding-left: 2rem; /* Restore normal left padding */
-        }
-        
+
         /* Custom Card Styles: Defined shadow, crisp look */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
             border-radius: 6px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08); 
+            box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.1), 0 3px 5px -3px rgba(0, 0, 0, 0.05); /* Slightly cleaner shadow */
             border: 1px solid #e5e7eb; 
             background: white;
             margin-bottom: 2rem;
@@ -85,7 +96,7 @@ def inject_admin_panel_css():
             padding-bottom: 0.5rem;
         }
         h2, h3, h4 {
-            color: #1f2937; /* Dark text for sub-headers */
+            color: #1f2937; 
             font-weight: 700;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
@@ -93,7 +104,7 @@ def inject_admin_panel_css():
         
         /* Primary Button Style (Emerald Green for Action) */
         .stButton>button {
-            background-color: #10b981; /* Emerald Green */
+            background-color: #0d9488; /* Slightly deeper Teal for polish */
             color: white !important; 
             border-radius: 6px;
             border: none;
@@ -103,7 +114,7 @@ def inject_admin_panel_css():
             transition: background-color 0.2s;
         }
         .stButton>button:hover {
-            background-color: #059669; /* Darker green on hover */
+            background-color: #0f766e; 
         }
 
         /* Metric styling: Clean and prominent */
@@ -114,7 +125,7 @@ def inject_admin_panel_css():
             border: 1px solid #d1d5db;
         }
         div[data-testid="stMetricValue"] {
-            color: #4f46e5 !important; /* Indigo value */
+            color: #4f46e5 !important; 
             font-size: 2rem;
             font-weight: 800;
         }
@@ -124,23 +135,26 @@ def inject_admin_panel_css():
             text-transform: uppercase;
         }
 
-        /* Streamlit Tab Styling */
+        /* Streamlit Tab Styling (Contained within sticky header) */
         div[data-testid="stTabs"] {
-            margin-bottom: 2rem;
+            margin-bottom: 0; /* Remove gap before content */
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            background-color: white; /* Ensure tab area has a solid background */
         }
         button[data-baseweb="tab"] {
-            color: #1f2937 !important; /* Inactive tab text color */
+            color: #4b5563 !important; /* Inactive tab text color */
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
-            background-color: #e5e7eb !important; /* Light background for tabs */
+            background-color: transparent !important; 
             border-bottom: 3px solid transparent !important;
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #4f46e5 !important; /* Deep Indigo for active tab text */
-            background-color: #ffffff !important; /* White active tab background */
-            border-bottom: 3px solid #4f46e5 !important; /* Indigo bottom bar */
+            color: #4f46e5 !important; 
+            background-color: #ffffff !important; 
+            border-bottom: 3px solid #4f46e5 !important; 
         }
 
         /* Horizontal rule color */
@@ -154,10 +168,11 @@ def inject_admin_panel_css():
         unsafe_allow_html=True
     )
 
-def admin_header(title):
-    """Renders the main page title with admin styling."""
-    st.markdown(f'<h1>{title}</h1>', unsafe_allow_html=True)
-    st.markdown('<hr style="border-top: 1px solid #e9ecef;">', unsafe_allow_html=True)
+def admin_header():
+    """Renders the main Application Title, now separate from the tab content."""
+    st.markdown('<div style="padding: 1rem 1.5rem; background-color: white; border-bottom: 1px solid #e5e7eb; z-index: 1001;">'
+                f'<h1 style="color: #4f46e5; margin: 0;">Operations Hub</h1>'
+                '</div>', unsafe_allow_html=True)
 
 
 # ==============================================================================
@@ -444,19 +459,19 @@ def render_gst_tab():
 # ==============================================================================
 
 def main():
+    # Set page config before anything else
     st.set_page_config(page_title="Operations Dashboard", layout="wide")
     
     # Inject CSS for Admin Panel Look
     inject_admin_panel_css()
 
-    # Application Header and Tab Navigation
-    st.markdown('<div style="margin-top: -1.5rem; margin-bottom: 2rem; padding: 1rem 0; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);">'
-                f'<h1 style="color: #4f46e5; margin: 0; padding-left: 1.5rem;">Operations Hub</h1>'
-                '</div>', unsafe_allow_html=True)
-
-
+    # Application Header (Title)
+    admin_header()
+    
+    # Tab Navigation (Contained within the sticky area)
     tab1, tab2 = st.tabs(["📦 Pick List Compiler", "📊 GST Filing Tools"])
 
+    # Content section starts here
     with tab1:
         render_picklist_tab()
     
@@ -464,4 +479,10 @@ def main():
         render_gst_tab()
 
 if __name__ == "__main__":
+    # Ensure raw_file_objects is initialized before the main function runs if using sessions
+    if 'raw_file_objects' not in st.session_state:
+        st.session_state.raw_file_objects = {}
+    if 'mapping_file_object' not in st.session_state:
+        st.session_state.mapping_file_object = None
+        
     main()
