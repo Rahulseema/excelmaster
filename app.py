@@ -6,37 +6,26 @@ from io import BytesIO
 # 1. CONFIGURATION SECTION
 # ==============================================================================
 
-# Your 10 Master Account Names 
-MASTER_ACCOUNT_NAMES = [
-    "Drench", "Drench India", "Shine ArC", "Sparsh", "Sparsh SC",
-    "BnB industries", "Shopforher", "Ansh Ent.", "AV Enterprises", "UV Enterprises"
+# --- NEW NAVIGATION CONSTANTS ---
+# The six main services that will appear in the sidebar.
+MAIN_SERVICES = [
+    "Picklist",
+    "Listing Maker",
+    "Reconciliations",
+    "Optimization",
+    "GST Reporting",
+    "Configuration"
 ]
 
-# Column Constants
-THE_ONLY_CHANNEL = "Listing Compiler"
-MAP_CHANNEL_SKU_COL = 'Channel SKU'
-MAP_CHANNEL_SIZE_COL = 'Channel Size'
-MAP_CHANNEL_COLOR_COL = 'Channel Color'
-MAP_OUR_SKU_COL = 'Our SKU'
-MAP_ACCOUNT_COL = 'Account name'
-ALLOWED_FILE_TYPES = ['csv', 'xlsx']
-
-# --- NAVIGATION CONSTANTS ---
-MAIN_SERVICES = {
-    "Listing Compiler": [
-        "Consolidation Tool", "Meesho", "Flipkart", "Amazon", 
-        "Myntra", "Nykaa", "Ajio", "JioMart", "Tatacliq"
-    ],
-    "GSTR Filing": [
-        "GSTR1: Meesho", "GSTR1: Flipkart", "GSTR1: Amazon", "GSTR3B"
-    ]
-}
-
-GSTR1_CHANNEL_MAP = {
-    "GSTR1: Meesho": "Meesho", 
-    "GSTR1: Flipkart": "Flipkart", 
-    "GSTR1: Amazon": "Amazon"
-}
+# The six channels that will appear as tabs within each main service.
+CHANNELS = [
+    "Amazon",
+    "Flipkart",
+    "Myntra",
+    "Meesho",
+    "Ajio",
+    "Jio Mart"
+]
 
 # ==============================================================================
 # 2. UI/UX STYLING (High Contrast, Clean Theme)
@@ -75,7 +64,7 @@ def inject_admin_panel_css():
             border-bottom: 1px solid #f0f8ff; 
         }
         
-        /* --- SIDEBAR MENU (Radio Buttons) --- */
+        /* --- SIDEBAR MENU (Radio Buttons for Services) --- */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label {
             font-size: 1.1rem;
             font-weight: 600;
@@ -96,12 +85,10 @@ def inject_admin_panel_css():
             border-left: 4px solid #71a5cc; 
         }
 
-        /* Hide the radio circle/dot */
+        /* Hide the radio circle/dot and empty label space */
         div[data-testid="stRadio"] label[data-baseweb="radio"] div:first-child {
             display: none !important;
         }
-        
-        /* FIX: Remove the space reserved for the empty radio button label ("") */
         div[data-testid="stSidebar"] div[data-testid="stForm"] > label {
             height: 0;
             padding: 0;
@@ -110,7 +97,7 @@ def inject_admin_panel_css():
             display: block;
         }
 
-        /* --- MAIN CONTENT TABS STYLING --- */
+        /* --- MAIN CONTENT TABS STYLING (Channels) --- */
         div[data-testid="stTabs"] {
             margin-bottom: 1.5rem;
             background-color: white; 
@@ -134,7 +121,7 @@ def inject_admin_panel_css():
         }
 
 
-        /* --- Main Content Styling --- */
+        /* --- Main Content Headers & Blocks --- */
         .block-container {
             padding-top: 2rem;
             padding-left: 2rem; 
@@ -142,14 +129,13 @@ def inject_admin_panel_css():
             padding-bottom: 5rem;
         }
 
-        /* Headers */
         h1 {
-            color: #212529; /* Dark color for main h1 */
+            color: #212529; 
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
         h2, h3, h4 {
-            color: #3f516d; /* Darker blue for sub-headers */
+            color: #3f516d; 
             font-weight: 600;
         }
 
@@ -163,8 +149,8 @@ def inject_admin_panel_css():
             background: white;
             margin-bottom: 1.5rem;
         }
-        
-        /* Button Style (Soft Green) */
+
+        /* Placeholder Button Style */
         .stButton>button {
             background-color: #a8d5ba;
             color: #212529 !important; 
@@ -177,14 +163,6 @@ def inject_admin_panel_css():
         .stButton>button:hover {
             background-color: #94c7a6;
         }
-        
-        /* File Uploader styling */
-        div[data-testid*="stFileUploader"] {
-            background-color: #fcfdff; 
-            border: 1px dashed #c8d9e6;
-            border-radius: 6px;
-            padding: 10px;
-        }
 
         </style>
         """,
@@ -192,161 +170,72 @@ def inject_admin_panel_css():
     )
 
 # ==============================================================================
-# 3. HELPER FUNCTIONS (DATA PROCESSING & SAMPLE DOWNLOADS)
+# 3. CONTENT RENDERING FUNCTIONS
 # ==============================================================================
 
-def read_uploaded_file(uploaded_file, name):
-    """Reads a file object into a Pandas DataFrame."""
-    try:
-        if uploaded_file.name.lower().endswith('.csv'):
-            return pd.read_csv(uploaded_file)
-        elif uploaded_file.name.lower().endswith('.xlsx'):
-            return pd.read_excel(uploaded_file, engine='openpyxl')
-        return None
-    except Exception as e:
-        st.error(f"Error reading file **{name}**: {type(e).__name__} - {e}")
-        return None
+def render_channel_content(service_name, channel_name):
+    """
+    Renders placeholder content tailored for the specific service and channel.
+    """
+    
+    st.markdown(f"## 🛠️ {service_name}: {channel_name} Module")
+    
+    # Placeholder content based on the new service name
+    if service_name == "Picklist":
+        st.info(f"Generate consolidated picklists for all pending orders from **{channel_name}**.")
+        st.date_input("Select Order Date Range", key=f"date_{service_name}_{channel_name}")
+        st.button(f"Generate {channel_name} Picklist", key=f"btn_{service_name}_{channel_name}")
+    
+    elif service_name == "Listing Maker":
+        st.info(f"Create, bulk update, or optimize product listings for **{channel_name}**.")
+        st.file_uploader(f"Upload {channel_name} Draft Listing File (Excel/CSV)", type=['xlsx', 'csv'], key=f"up_{service_name}_{channel_name}")
+    
+    elif service_name == "Reconciliations":
+        st.info(f"Match sales data with payment settlements for **{channel_name}** to identify discrepancies.")
+        st.file_uploader(f"Upload {channel_name} Settlement Report", type=['xlsx', 'csv'], key=f"up_{service_name}_{channel_name}")
+        st.button(f"Run {channel_name} Reconciliation", key=f"btn_{service_name}_{channel_name}")
 
-def get_sample_mapping_file():
-    """Generates a sample Excel file for the SKU mapping template."""
-    sample_data = {
-        MAP_CHANNEL_SKU_COL: ['COMP-D101', 'COMP-D101', 'COMP-D102', 'COMP-D101'],
-        MAP_CHANNEL_SIZE_COL: ['M', 'L', 'S', 'L'],
-        MAP_CHANNEL_COLOR_COL: ['Red', 'Blue', 'Green', 'Red'],
-        MAP_OUR_SKU_COL: ['DRENCH-T101-M-R', 'DRENCH-T101-L-B', 'DRENCH-T102-S-G', 'DRENCH-T101-L-R'],
-        MAP_ACCOUNT_COL: ['Drench', 'Drench', 'Sparsh', 'Drench']
-    }
-    sample_df = pd.DataFrame(sample_data)
-    
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        sample_df.to_excel(writer, index=False, sheet_name='Sample_Mapping')
-    return output.getvalue()
+    elif service_name == "Optimization":
+        st.info(f"Tools to optimize pricing, inventory allocation, or advertising spend on **{channel_name}**.")
+        st.slider("Inventory Threshold (%)", 0, 100, 75, key=f"slider_{service_name}_{channel_name}")
+        st.button(f"Apply {channel_name} Pricing Rules", key=f"btn_{service_name}_{channel_name}")
 
-def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
-    # Placeholder function for the core business logic
-    st.success("Consolidation process complete! (Placeholder)")
-    st.dataframe(pd.DataFrame({'SKU': ['D-101'], 'Qty': [50]}))
-
-
-# ==============================================================================
-# 4. CONTENT RENDERING FUNCTIONS
-# ==============================================================================
-
-def render_consolidation_tool():
-    """Renders the main Pick List Compilation tool."""
-    
-    st.markdown("## 📦 Consolidation Tool")
-    
-    st.subheader("1. Master SKU Mapping File Setup (REQUIRED)")
-    st.markdown("Map **Channel SKU, Size, and Color** to your **Our SKU** for consolidation.")
-    
-    col_map_upload, col_map_download = st.columns([2, 1])
-    
-    with col_map_upload:
-        mapping_file = st.file_uploader(
-            f"Upload Master Mapping File (CSV/Excel)",
-            type=ALLOWED_FILE_TYPES,
-            key="file_uploader_mapping"
-        )
-        st.session_state.mapping_file_object = mapping_file
-    
-    with col_map_download:
-        st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True) 
-        st.download_button(
-            label="⬇️ Download Sample Mapping Template",
-            data=get_sample_mapping_file(),
-            file_name='sample_sku_mapping_template.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            use_container_width=True
-        )
-
-    st.markdown("---")
-    
-    st.subheader(f"2. {THE_ONLY_CHANNEL} Pick List Uploads (10 Accounts)")
-    st.info("Upload pick list files here to be consolidated using the mapping file above.")
-    
-    accounts_to_upload = MASTER_ACCOUNT_NAMES
-    cols = st.columns(3) 
-
-    for j, account_name in enumerate(accounts_to_upload):
-        unique_key = f"{THE_ONLY_CHANNEL}_{account_name.replace(' ', '_')}"
-        with cols[j % 3]: 
-            st.file_uploader(f"**{account_name}** Pick List", type=ALLOWED_FILE_TYPES, key=unique_key)
-            
-    st.markdown("---")
-    st.subheader("3. Consolidate and Generate Pick List")
-    if st.button("🚀 Run Consolidation", type="secondary"):
-        process_consolidation({}, st.session_state.mapping_file_object, 1)
-
-
-def render_gstr1_channel_tool(channel_name):
-    """Renders the specific GSTR1 channel upload tool (e.g., Meesho, Amazon)."""
-    
-    st.markdown(f"## 📈 GSTR1 Preparation: {channel_name}")
-    st.markdown(f"Upload the necessary reports from **{channel_name}** to prepare the GSTR-1 data.")
-    
-    with st.container():
-        if channel_name == "Meesho":
-            st.markdown('### Required Reports (Meesho)')
-            st.file_uploader("1. Forward Sheet (CSV/Excel)", type=['csv', 'xlsx'], key="meesho_forward_uploader")
-            st.file_uploader("2. Return Sheet (CSV/Excel)", type=['csv', 'xlsx'], key="meesho_return_uploader")
+    elif service_name == "GST Reporting":
+        st.info(f"Generate tax summaries (e.g., GSTR-1 data) for the selected period from **{channel_name}** sales.")
+        st.selectbox("Select GST Form", ["GSTR-1 Summary", "GSTR-3B Input"], key=f"select_{service_name}_{channel_name}")
+        st.button(f"Export {channel_name} GST Data", key=f"btn_{service_name}_{channel_name}")
         
-        elif channel_name == "Flipkart":
-            st.markdown('### Required Reports (Flipkart)')
-            st.file_uploader("1. Sales Data (CSV/Excel)", type=['csv', 'xlsx'], key="flipkart_sales_uploader")
-            
-        elif channel_name == "Amazon":
-            st.markdown('### Required Reports (Amazon)')
-            st.file_uploader("1. B2C MTR (CSV/Excel)", type=['csv', 'xlsx'], key="amazon_b2c_uploader")
-            st.file_uploader("2. B2B MTR (CSV/Excel)", type=['csv', 'xlsx'], key="amazon_b2b_uploader")
-
-        st.markdown("---")
-        st.button(f"Generate {channel_name} GSTR1 Summary", type="secondary")
-
-def render_gstr3b_tool():
-    """Renders the GSTR3B Reconciliation tool."""
-    st.markdown("## 📊 GSTR-3B Reconciliation")
-    st.markdown("Upload documents to reconcile Input Tax Credit (ITC) and summary tax liability.")
-
-    with st.container():
-        st.warning("Future Feature: Upload GSTR-2A/2B for ITC reconciliation against your Purchase Register.")
-        st.file_uploader("Upload GSTR-1 Summary Data (for comparison)", type=['csv', 'xlsx'], key="gstr3b_sales_uploader")
-        st.file_uploader("Upload Purchase/Expense Register (for ITC calculation)", type=['csv', 'xlsx'], key="gstr3b_purchase_uploader")
-        st.markdown("---")
-        st.button("Run GSTR3B Reconciliation", type="secondary")
-
-def render_default_page(menu_item):
-    """Renders a default welcome page for undeveloped sections."""
-    st.markdown(f"## 🚧 {menu_item} Module")
-    st.info(f"This is the landing page for **{menu_item}**. Functionality will be implemented soon.")
-
+    elif service_name == "Configuration":
+        st.info(f"Manage API keys, credentials, and master data mappings specific to **{channel_name}**.")
+        st.text_input(f"{channel_name} API Key", "****************", type="password", key=f"input_{service_name}_{channel_name}")
+        st.button(f"Save {channel_name} Settings", key=f"btn_{service_name}_{channel_name}")
+    
+    else:
+        st.warning("No specific functionality defined yet.")
 
 # ==============================================================================
-# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS)
+# 4. NAVIGATION LOGIC: SIDEBAR (SERVICES) + TABS (CHANNELS)
 # ==============================================================================
 
 def setup_sidebar_navigation():
-    """Sets up the simplified two-item sidebar menu."""
+    """Sets up the six main service options in the sidebar."""
     st.sidebar.markdown('<h1>Operations Hub</h1>', unsafe_allow_html=True)
     
     # Initialize state with a default value
     if 'main_service' not in st.session_state:
-        st.session_state.main_service = "Listing Compiler"
+        st.session_state.main_service = MAIN_SERVICES[0]
     
-    # Static list of main services for the sidebar
-    main_options = list(MAIN_SERVICES.keys()) 
-    
+    # Determine the current index for the radio button
     try:
-        current_index = main_options.index(st.session_state.main_service)
+        current_index = MAIN_SERVICES.index(st.session_state.main_service)
     except ValueError:
         current_index = 0
-        st.session_state.main_service = main_options[0]
+        st.session_state.main_service = MAIN_SERVICES[0]
 
     # Create the sidebar radio button. Label is set to "" to hide the title.
     selected_main_service = st.sidebar.radio(
         "",  
-        main_options, 
+        MAIN_SERVICES, 
         key='main_service_radio',
         index=current_index 
     )
@@ -355,44 +244,22 @@ def setup_sidebar_navigation():
 
 
 def render_channel_tabs():
-    """Renders the channel options as tabs based on the selected main service."""
+    """Renders the six channel options as tabs based on the selected main service."""
     
     current_service = st.session_state.main_service
     
-    if current_service not in MAIN_SERVICES:
-        st.error(f"Error: Service '{current_service}' not found in configuration.")
-        return
-
-    channel_options = MAIN_SERVICES[current_service]
-    
-    if not channel_options:
-        st.warning("No channels defined for this service.")
-        return
-
-    # Use st.tabs to create the channel navigation
-    tabs = st.tabs(channel_options)
+    # Use st.tabs to create the channel navigation using the global CHANNELS list
+    tabs = st.tabs(CHANNELS)
 
     # Render content inside the respective tab container
-    for i, channel_name in enumerate(channel_options):
+    for i, channel_name in enumerate(CHANNELS):
         with tabs[i]:
-            
-            if current_service == "Listing Compiler":
-                if channel_name == "Consolidation Tool":
-                    render_consolidation_tool()
-                else:
-                    render_default_page(f"Listing Compiler: {channel_name}")
-            
-            elif current_service == "GSTR Filing":
-                if channel_name == "GSTR3B":
-                    render_gstr3b_tool()
-                elif channel_name in GSTR1_CHANNEL_MAP:
-                    render_gstr1_channel_tool(GSTR1_CHANNEL_MAP[channel_name])
-                else:
-                    render_default_page(f"GSTR Filing: {channel_name}")
+            # Call the content renderer for the specific Service and Channel
+            render_channel_content(current_service, channel_name)
 
 
 # ==============================================================================
-# 6. MAIN APP EXECUTION
+# 5. MAIN APP EXECUTION
 # ==============================================================================
 
 def main():
@@ -409,10 +276,4 @@ def main():
     render_channel_tabs()
 
 if __name__ == "__main__":
-    # Ensure session state is initialized
-    if 'raw_file_objects' not in st.session_state:
-        st.session_state.raw_file_objects = {}
-    if 'mapping_file_object' not in st.session_state:
-        st.session_state.mapping_file_object = None
-
     main()
