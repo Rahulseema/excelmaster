@@ -3,7 +3,7 @@ import pandas as pd
 from io import BytesIO
 
 # ==============================================================================
-# 1. CONFIGURATION SECTION (CRITICAL: ADJUST COLUMN NAMES HERE!)
+# 1. CONFIGURATION SECTION 
 # ==============================================================================
 
 # Your 10 Master Account Names (Must match account name used in Mapping File)
@@ -12,13 +12,10 @@ MASTER_ACCOUNT_NAMES = [
     "BnB industries", "Shopforher", "Ansh Ent.", "AV Enterprises", "UV Enterprises"
 ]
 
-# Selling Channels
-MULTI_ACCOUNT_CHANNELS = ["Meesho", "Amazon", "Flipkart", "Myntra"] # 10 accounts each
-SINGLE_ACCOUNT_CHANNELS = ["Nykaa", "JioMart", "Ajio", "Tatacliq"] # 1 account each (for now)
+# The single, consolidated channel
+THE_ONLY_CHANNEL = "Listing Compiler"
 
-ALL_CHANNELS = MULTI_ACCOUNT_CHANNELS + SINGLE_ACCOUNT_CHANNELS
-
-# Mapping file column names (Your target columns in the mapping file):
+# Mapping file column names:
 MAP_CHANNEL_SKU_COL = 'Channel SKU'
 MAP_CHANNEL_SIZE_COL = 'Channel Size'
 MAP_CHANNEL_COLOR_COL = 'Channel Color'
@@ -32,19 +29,10 @@ PICKLIST_COLOR_COL = 'Color'
 PICKLIST_QTY_COL = 'Qty'
 
 
-# Configuration for Pick List Column Names by Channel
-# !!! WARNING: VERIFY THESE COLUMN NAMES AGAINST YOUR ACTUAL REPORTS !!!
-# Adjust the values in 'sku', 'size', 'color', 'qty' to match the EXACT column headers 
-# in the reports you download from each respective channel.
+# Configuration for Pick List Column Names for the Listing Compiler
+# NOTE: All 10 accounts must use these exact column headers in their reports.
 CHANNEL_COLUMNS_MAP = {
-    "Meesho": {'sku': 'SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'Quantity'}, 
-    "Amazon": {'sku': 'item-sku', 'size': 'size-attribute', 'color': 'color-attribute', 'qty': 'quantity-purchased'}, 
-    "Flipkart": {'sku': 'Seller SKU ID', 'size': 'Size', 'color': 'Color', 'qty': 'quantity-purchased'},
-    "Myntra": {'sku': 'Seller SKU', 'size': 'Style Size', 'color': 'Color Name', 'qty': 'Quantity'},
-    "Nykaa": {'sku': 'Seller Code', 'size': 'Size', 'color': 'Color', 'qty': 'Inventory Qty'}, 
-    "JioMart": {'sku': 'Product SKU', 'size': 'Size', 'color': 'Color', 'qty': 'Order Qty'},
-    "Ajio": {'sku': 'Seller SKU', 'size': 'Size', 'color': 'Color', 'qty': 'Unit Qty'},
-    "Tatacliq": {'sku': 'Item Code', 'size': 'Size', 'color': 'Color', 'qty': 'Units'},
+    THE_ONLY_CHANNEL: {'sku': 'SKU', 'size': 'Size', 'color': 'Color', 'qty': 'Qty'}, 
 }
 
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
@@ -68,7 +56,7 @@ def read_uploaded_file(uploaded_file, name):
 def get_sample_mapping_file():
     """Generates a sample Excel file for the SKU mapping template."""
     sample_data = {
-        MAP_CHANNEL_SKU_COL: ['MSHO-D101', 'AMZN-D101', 'MSHO-D102', 'MSHO-D101'],
+        MAP_CHANNEL_SKU_COL: ['COMP-D101', 'COMP-D101', 'COMP-D102', 'COMP-D101'],
         MAP_CHANNEL_SIZE_COL: ['M', 'L', 'S', 'L'],
         MAP_CHANNEL_COLOR_COL: ['Red', 'Blue', 'Green', 'Red'],
         MAP_OUR_SKU_COL: ['DRENCH-T101-M-R', 'DRENCH-T101-L-B', 'DRENCH-T102-S-G', 'DRENCH-T101-L-R'],
@@ -81,15 +69,15 @@ def get_sample_mapping_file():
         sample_df.to_excel(writer, index=False, sheet_name='Sample_Mapping')
     return output.getvalue()
 
-def get_sample_picklist_file(channel_name):
-    """Generates a sample picklist file for a specific channel based on its column map."""
-    config = CHANNEL_COLUMNS_MAP[channel_name]
+def get_sample_picklist_file():
+    """Generates a sample picklist file for the Listing Compiler channel."""
+    config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
     
     sample_data = {
-        config['sku']: [f'{channel_name[:3]}-A101', f'{channel_name[:3]}-B202'],
-        config['size']: ['S', 'L'],
-        config['color']: ['Black', 'White'],
-        config['qty']: [5, 3]
+        config['sku']: ['SKU-1001', 'SKU-1002', 'SKU-1003'],
+        config['size']: ['XS', 'M', 'L'],
+        config['color']: ['Black', 'Navy', 'Grey'],
+        config['qty']: [20, 15, 12]
     }
     sample_df = pd.DataFrame(sample_data)
     
@@ -113,13 +101,13 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 
         processed_data = []
         
-        # 1. Process and Clean all Channel DataFrames
+        # 1. Process and Clean all Account DataFrames
         for key, item in raw_file_objects.items():
             if item['file'] is None: continue 
             
-            df = read_uploaded_file(item['file'], f"{item['channel']} - {item['account']}")
+            df = read_uploaded_file(item['file'], f"{item['account']}")
             if df is not None:
-                config = CHANNEL_COLUMNS_MAP[item['channel']]
+                config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
                 
                 try:
                     # Rename columns to standard names for merging
@@ -136,7 +124,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
                     processed_data.append(df_clean)
                     
                 except KeyError as e:
-                    st.error(f"Column Mismatch in **{item['channel']} - {item['account']}**: Column {e} not found.")
+                    st.error(f"Column Mismatch in **{item['account']}**: Column {e} not found.")
                     st.warning(f"Configuration Check: SKU='{config['sku']}', Size='{config['size']}', Color='{config['color']}', Qty='{config['qty']}'")
                     return
 
@@ -152,16 +140,11 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
             how='left'
         )
         
-        # --- FIX IMPLEMENTED HERE ---
         # Handle unmapped items (No 'Our SKU' found) by safely concatenating 'UNMAPPED-'
-        
-        # 1. Ensure Channel SKU is string type for safe concatenation
         merged_df[MAP_CHANNEL_SKU_COL] = merged_df[MAP_CHANNEL_SKU_COL].astype(str)
 
-        # 2. Create a boolean mask for rows where MAP_OUR_SKU_COL is missing (NaN)
         unmapped_mask = merged_df[MAP_OUR_SKU_COL].isna()
         
-        # 3. Apply the fallback concatenation ('UNMAPPED-' + Channel SKU) only to the masked rows
         merged_df.loc[unmapped_mask, MAP_OUR_SKU_COL] = (
             'UNMAPPED-' + merged_df.loc[unmapped_mask, MAP_CHANNEL_SKU_COL]
         )
@@ -192,7 +175,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
         final_compiled_picklist = final_compiled_picklist.sort_values(by=MAP_OUR_SKU_COL)
 
         # 4. Display and Download
-        st.subheader("✅ Final Master Pick List by D SKU")
+        st.subheader("✅ Final Master Pick List by Our SKU")
         st.dataframe(final_compiled_picklist, use_container_width=True)
 
         output = BytesIO()
@@ -213,7 +196,7 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
 # ==============================================================================
 
 def render_picklist_tab():
-    st.title("📦 Multi-Channel Master Pick List Compiler")
+    st.title("📦 Master Pick List Compiler")
     st.markdown("Upload **Mapping File (Required)** and **at least one** Pick List file to consolidate.")
     st.markdown("---")
 
@@ -225,7 +208,7 @@ def render_picklist_tab():
 
     # --- SETUP & UPLOADING TABS ---
     
-    tab_titles = ["1. Setup & Mapping"] + [f"2. Upload - {c}" for c in ALL_CHANNELS]
+    tab_titles = ["1. Setup & Mapping", "2. Listing Compiler Upload"]
     tabs = st.tabs(tab_titles)
     
     # 1. SETUP TAB (MAPPING FILE)
@@ -252,57 +235,50 @@ def render_picklist_tab():
         )
         
         if mapping_file:
-            st.success("Mapping file uploaded. Proceed to channel uploads.")
+            st.success("Mapping file uploaded. Proceed to upload pick lists.")
     
-    # 2. UPLOADING TABS (The 8 Channels)
-    for i, channel_name in enumerate(ALL_CHANNELS):
-        with tabs[i + 1]: 
-            st.header(f"Upload Pick Lists for **{channel_name}**")
+    # 2. UPLOADING TAB (The Single Channel)
+    with tabs[1]: 
+        st.header(f"Upload Pick Lists for **{THE_ONLY_CHANNEL}**")
+        
+        config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
+        st.info(f"All 10 accounts must use these column headers: **SKU**: `{config['sku']}`, **Size**: `{config['size']}`, **Color**: `{config['color']}`, **Qty**: `{config['qty']}`.")
+
+        # Sample Download Option for Pick List
+        st.subheader("Download Sample Pick List Template")
+        st.download_button(
+            label=f"Download {THE_ONLY_CHANNEL} Sample Template (Excel)",
+            data=get_sample_picklist_file(),
+            file_name=f'sample_{THE_ONLY_CHANNEL.lower().replace(" ", "_")}_picklist.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        st.markdown("---")
+
+        accounts_to_upload = MASTER_ACCOUNT_NAMES
+        cols = st.columns(3) # Display 3 uploaders per row
+
+        for j, account_name in enumerate(accounts_to_upload):
+            unique_key = f"{THE_ONLY_CHANNEL}_{account_name.replace(' ', '_')}"
             
-            config = CHANNEL_COLUMNS_MAP.get(channel_name)
-            st.info(f"The system is expecting the following column headers in your uploaded report: **SKU**: `{config['sku']}`, **Size**: `{config['size']}`, **Color**: `{config['color']}`, **Qty**: `{config['qty']}`.")
-
-            # Sample Download Option for Pick List
-            st.subheader("Download Sample Pick List Template")
-            st.download_button(
-                label=f"Download {channel_name} Sample Template (Excel)",
-                data=get_sample_picklist_file(channel_name),
-                file_name=f'sample_{channel_name.lower().replace(" ", "_")}_picklist.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            st.markdown("---")
-
-
-            if channel_name in MULTI_ACCOUNT_CHANNELS:
-                accounts_to_upload = MASTER_ACCOUNT_NAMES
-                cols = st.columns(3)
-            else:
-                accounts_to_upload = [f"{channel_name} - Main"] 
-                cols = [st.container()] 
-
-            for j, account_name in enumerate(accounts_to_upload):
-                unique_key = f"{channel_name}_{account_name.replace(' ', '_')}"
+            with cols[j % 3]: # Use modulo 3 for cycling through the 3 columns
+                uploaded_file = st.file_uploader(
+                    f"**{account_name}** Pick List",
+                    type=ALLOWED_FILE_TYPES,
+                    key=unique_key
+                )
                 
-                with cols[j % len(cols)]:
-                    uploaded_file = st.file_uploader(
-                        f"**{account_name}** Pick List",
-                        type=ALLOWED_FILE_TYPES,
-                        key=unique_key
-                    )
-                    
-                    st.session_state.raw_file_objects[unique_key] = {
-                        'file': uploaded_file,
-                        'channel': channel_name,
-                        'account': account_name
-                    }
+                # Store the file object with account name
+                st.session_state.raw_file_objects[unique_key] = {
+                    'file': uploaded_file,
+                    'channel': THE_ONLY_CHANNEL,
+                    'account': account_name
+                }
     
     st.markdown("---")
 
     # --- SUBMIT BUTTON & PROCESSING LOGIC TRIGGER ---
     
-    total_multi_uploads = len(MULTI_ACCOUNT_CHANNELS) * len(MASTER_ACCOUNT_NAMES)
-    total_single_uploads = len(SINGLE_ACCOUNT_CHANNELS)
-    TOTAL_POTENTIAL_UPLOADS = total_multi_uploads + total_single_uploads
+    TOTAL_POTENTIAL_UPLOADS = len(MASTER_ACCOUNT_NAMES) # 10 accounts total
     
     uploaded_pick_list_count = sum(1 for item in st.session_state.raw_file_objects.values() if item['file'] is not None)
 
@@ -321,7 +297,7 @@ def render_picklist_tab():
             process_consolidation(st.session_state.raw_file_objects, st.session_state.mapping_file_object, uploaded_pick_list_count)
     
     else:
-        st.info("🟡 **Pick List Required:** Please upload at least one pick list file in the channel tabs.")
+        st.info("🟡 **Pick List Required:** Please upload at least one pick list file in the Listing Compiler Upload tab.")
 
 
 # ==============================================================================
