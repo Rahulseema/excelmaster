@@ -3,7 +3,7 @@ import pandas as pd
 from io import BytesIO
 
 # ==============================================================================
-# 1. CONFIGURATION SECTION (UNCHANGED)
+# 1. CONFIGURATION SECTION
 # ==============================================================================
 
 # Your 10 Master Account Names 
@@ -11,19 +11,14 @@ MASTER_ACCOUNT_NAMES = [
     "Drench", "Drench India", "Shine ArC", "Sparsh", "Sparsh SC",
     "BnB industries", "Shopforher", "Ansh Ent.", "AV Enterprises", "UV Enterprises"
 ]
+
+# Column Constants
 THE_ONLY_CHANNEL = "Listing Compiler"
 MAP_CHANNEL_SKU_COL = 'Channel SKU'
 MAP_CHANNEL_SIZE_COL = 'Channel Size'
 MAP_CHANNEL_COLOR_COL = 'Channel Color'
 MAP_OUR_SKU_COL = 'Our SKU'
 MAP_ACCOUNT_COL = 'Account name'
-PICKLIST_SKU_COL = 'SKU'
-PICKLIST_SIZE_COL = 'Size'
-PICKLIST_COLOR_COL = 'Color'
-PICKLIST_QTY_COL = 'Qty'
-CHANNEL_COLUMNS_MAP = {
-    THE_ONLY_CHANNEL: {'sku': 'SKU', 'size': 'Size', 'color': 'Color', 'qty': 'Qty'}, 
-}
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # --- NAVIGATION CONSTANTS ---
@@ -37,7 +32,6 @@ MAIN_SERVICES = {
     ]
 }
 
-# Mapping tab names back to specific render functions
 GSTR1_CHANNEL_MAP = {
     "GSTR1: Meesho": "Meesho", 
     "GSTR1: Flipkart": "Flipkart", 
@@ -45,26 +39,24 @@ GSTR1_CHANNEL_MAP = {
 }
 
 # ==============================================================================
-# 2. UI/UX STYLING (PHOENIX-INSPIRED PASTEL CSS) - FINALIZED FOR VISIBILITY
+# 2. UI/UX STYLING (High Contrast, Clean Theme)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS for a Phoenix-inspired, fixed-sidebar theme with DARK TEXT."""
+    """Injects custom CSS for a fixed-sidebar theme with DARK TEXT for visibility."""
     st.markdown(
         """
         <style>
         /* Base Streamlit Overrides */
         #MainMenu, footer, header {visibility: hidden;}
 
-        /* --- Pastel Phoenix Styling --- */
-        
-        /* Base Colors & Text */
+        /* --- Global High Contrast Text --- */
         :root, body, .stApp {
-            color: #212529 !important; 
-            background-color: #f5f8fb; 
+            color: #212529 !important; /* Very Dark Gray for all text */
+            background-color: #f5f8fb; /* Light background */
         }
         
-        /* Sidebar Styling: Fixed, Full Height, and Clean */
+        /* Sidebar Styling: Fixed, Full Height */
         [data-testid="stSidebar"] {
             background-color: #ffffff; 
             border-right: 1px solid #e3eaf3;
@@ -76,27 +68,27 @@ def inject_admin_panel_css():
         
         /* Sidebar Header/Title */
         [data-testid="stSidebar"] h1 {
-            color: #71a5cc; 
+            color: #71a5cc; /* Pastel Blue for Logo/Title */
             font-size: 1.5rem;
             padding: 1.5rem 1.5rem 0.5rem 1.5rem;
             margin-bottom: 0.5rem;
             border-bottom: 1px solid #f0f8ff; 
         }
         
-        /* --- SIDEBAR MENU (RADIO BUTTONS FOR MAIN SERVICE) --- */
+        /* --- SIDEBAR MENU (Radio Buttons) --- */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label {
             font-size: 1.1rem;
             font-weight: 600;
             padding: 0.6rem 1.5rem;
             margin-left: 0; 
             width: 100%;
-            color: #212529 !important; 
+            color: #212529 !important; /* Dark text for sidebar links */
             transition: background-color 0.2s;
         }
         [data-testid="stSidebar"] div[data-testid="stRadio"] label:hover {
             background-color: #f0f8ff; 
         }
-        /* Active Link Text Styling */
+        /* Active Link Styling */
         [data-testid="stSidebar"] div[data-testid="stRadio"] label[data-baseweb="radio"][aria-checked="true"] {
             background-color: #e6f1f8 !important; 
             color: #3f516d !important; 
@@ -109,7 +101,7 @@ def inject_admin_panel_css():
             display: none !important;
         }
         
-        /* FIX: Remove the space reserved for the radio button label */
+        /* FIX: Remove the space reserved for the empty radio button label ("") */
         div[data-testid="stSidebar"] div[data-testid="stForm"] > label {
             height: 0;
             padding: 0;
@@ -118,7 +110,7 @@ def inject_admin_panel_css():
             display: block;
         }
 
-        /* --- MAIN CONTENT TABS STYLING (For Channel Navigation) --- */
+        /* --- MAIN CONTENT TABS STYLING --- */
         div[data-testid="stTabs"] {
             margin-bottom: 1.5rem;
             background-color: white; 
@@ -127,7 +119,7 @@ def inject_admin_panel_css():
             padding-left: 1rem;
         }
         button[data-baseweb="tab"] {
-            color: #212529 !important; 
+            color: #212529 !important; /* Dark text for inactive tabs */
             font-weight: 600;
             border-radius: 6px 6px 0 0 !important;
             padding: 10px 20px !important;
@@ -136,13 +128,13 @@ def inject_admin_panel_css():
             transition: all 0.2s;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            color: #3f516d !important; 
+            color: #3f516d !important; /* Dark blue for active tab */
             background-color: #ffffff !important; 
             border-bottom: 3px solid #71a5cc !important; 
         }
 
 
-        /* --- Main Content Styling (Clean, Card-Based) --- */
+        /* --- Main Content Styling --- */
         .block-container {
             padding-top: 2rem;
             padding-left: 2rem; 
@@ -152,16 +144,16 @@ def inject_admin_panel_css():
 
         /* Headers */
         h1 {
-            color: #212529; 
+            color: #212529; /* Dark color for main h1 */
             font-weight: 700;
             margin-bottom: 1.5rem;
         }
         h2, h3, h4 {
-            color: #3f516d; 
+            color: #3f516d; /* Darker blue for sub-headers */
             font-weight: 600;
         }
 
-        /* Custom Card Styles: Clean, Phoenix-style container */
+        /* Card/Block Styles */
         div[data-testid="stVerticalBlock"], 
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
@@ -172,7 +164,7 @@ def inject_admin_panel_css():
             margin-bottom: 1.5rem;
         }
         
-        /* Primary Button Style (Soft Green) */
+        /* Button Style (Soft Green) */
         .stButton>button {
             background-color: #a8d5ba;
             color: #212529 !important; 
@@ -200,7 +192,7 @@ def inject_admin_panel_css():
     )
 
 # ==============================================================================
-# 3. HELPER FUNCTIONS (DATA PROCESSING & SAMPLE DOWNLOADS - UNCHANGED)
+# 3. HELPER FUNCTIONS (DATA PROCESSING & SAMPLE DOWNLOADS)
 # ==============================================================================
 
 def read_uploaded_file(uploaded_file, name):
@@ -231,31 +223,14 @@ def get_sample_mapping_file():
         sample_df.to_excel(writer, index=False, sheet_name='Sample_Mapping')
     return output.getvalue()
 
-def get_sample_picklist_file():
-    """Generates a sample picklist file for the Listing Compiler channel."""
-    config = CHANNEL_COLUMNS_MAP[THE_ONLY_CHANNEL]
-    
-    sample_data = {
-        config['sku']: ['SKU-1001', 'SKU-1002', 'SKU-1003'],
-        config['size']: ['XS', 'M', 'L'],
-        config['color']: ['Black', 'Navy', 'Grey'],
-        config['qty']: [20, 15, 12]
-    }
-    sample_df = pd.DataFrame(sample_data)
-    
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        sample_df.to_excel(writer, index=False, sheet_name='Sample_Picklist')
-    return output.getvalue()
-
-
 def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_list_count):
+    # Placeholder function for the core business logic
     st.success("Consolidation process complete! (Placeholder)")
     st.dataframe(pd.DataFrame({'SKU': ['D-101'], 'Qty': [50]}))
 
 
 # ==============================================================================
-# 4. CONTENT RENDERING FUNCTIONS (UNCHANGED)
+# 4. CONTENT RENDERING FUNCTIONS
 # ==============================================================================
 
 def render_consolidation_tool():
@@ -266,7 +241,6 @@ def render_consolidation_tool():
     st.subheader("1. Master SKU Mapping File Setup (REQUIRED)")
     st.markdown("Map **Channel SKU, Size, and Color** to your **Our SKU** for consolidation.")
     
-    # Placeholder for file uploader and download
     col_map_upload, col_map_download = st.columns([2, 1])
     
     with col_map_upload:
@@ -292,7 +266,6 @@ def render_consolidation_tool():
     st.subheader(f"2. {THE_ONLY_CHANNEL} Pick List Uploads (10 Accounts)")
     st.info("Upload pick list files here to be consolidated using the mapping file above.")
     
-    # Placeholder for the 10 account uploaders
     accounts_to_upload = MASTER_ACCOUNT_NAMES
     cols = st.columns(3) 
 
@@ -350,7 +323,7 @@ def render_default_page(menu_item):
 
 
 # ==============================================================================
-# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS) - UNCHANGED FUNCTIONALLY
+# 5. NAVIGATION LOGIC: SIDEBAR (MAIN) + TABS (CHANNELS)
 # ==============================================================================
 
 def setup_sidebar_navigation():
@@ -362,9 +335,8 @@ def setup_sidebar_navigation():
         st.session_state.main_service = "Listing Compiler"
     
     # Static list of main services for the sidebar
-    main_options = list(MAIN_SERVICES.keys()) # ["Listing Compiler", "GSTR Filing"]
+    main_options = list(MAIN_SERVICES.keys()) 
     
-    # Determine the current index for the radio button
     try:
         current_index = main_options.index(st.session_state.main_service)
     except ValueError:
@@ -420,20 +392,20 @@ def render_channel_tabs():
 
 
 # ==============================================================================
-# 6. MAIN APP EXECUTION (UNCHANGED)
+# 6. MAIN APP EXECUTION
 # ==============================================================================
 
 def main():
     st.set_page_config(page_title="Operations Dashboard", layout="wide")
     
-    # 1. Inject CSS for the Phoenix-Inspired Look
+    # 1. Inject CSS for the theme and visibility
     inject_admin_panel_css()
 
     # 2. Setup Sidebar Navigation
     setup_sidebar_navigation()
 
     # 3. Render the Channel Tabs and Content
-    st.markdown(f"# {st.session_state.main_service}") # Main Title
+    st.markdown(f"# {st.session_state.main_service}") # Main Title for the content area
     render_channel_tabs()
 
 if __name__ == "__main__":
