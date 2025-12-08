@@ -30,9 +30,9 @@ CHANNELS = [
 # --- THEME COLORS ---
 VIBRANT_BLUE_ACCENT = "#4e73df" # Used for general buttons/elements
 LIGHT_GRAY_BG = "#f5f8fb"
-DARK_TEXT_DEFAULT = "#000000"  # NEW: Black for default text
-RED_ACCENT = "#dc3545"         # NEW: Red for active/hover states
-DARK_SLATE_BLUE = "#263d57"    # Used for sub-tab active text
+DARK_TEXT_DEFAULT = "#000000"  # NEW: Black for default text (Requested)
+RED_ACCENT = "#dc3545"         # Red for active/hover states
+DARK_SLATE_BLUE = "#263d57"    # Used for sub-headers
 
 
 # ==============================================================================
@@ -190,10 +190,8 @@ def render_channel_content(service_name, channel_name):
     Renders placeholder content tailored for the specific service and channel.
     """
     
-    # We use H2 here since H1 is now the main navigation
     st.markdown(f"## 🛠️ {service_name}: {channel_name} Module") 
     
-    # Wrap the content in a main container block to apply card styling
     with st.container():
         if service_name == "Picklist":
             st.info(f"Generate consolidated picklists for all pending orders from **{channel_name}**.")
