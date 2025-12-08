@@ -27,100 +27,118 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (NEW ADMIN PANEL CSS WITH VISIBILITY FIXES)
+# 2. UI/UX STYLING (PASTEL ADMIN PANEL CSS)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS to mimic the Soft UI Dashboard look with high contrast."""
+    """Injects custom CSS for a soft, pastel Admin Panel look."""
     st.markdown(
         """
         <style>
         /* Base Streamlit Overrides */
         #MainMenu, footer, header {visibility: hidden;}
 
-        /* --- Admin Panel Styling --- */
+        /* --- Pastel Admin Panel Styling --- */
         
-        /* Set main text color to a dark shade for high contrast */
-        body, .stApp {
-            color: #344767; /* Dark blue/gray for primary text */
-            background-color: #f8f9fa; /* Light gray background */
-            padding-top: 1rem;
+        /* Base Colors: Soft background, dark text */
+        .stApp {
+            background-color: #fcfdff; /* Very soft white/cream background */
+            color: #3f516d; /* Deep slate blue for primary text */
+            padding-top: 1.5rem;
         }
-
-        /* Set the color for all general text, ensuring contrast */
+        
+        /* General Text Color */
         p, label, .stMarkdown, div[data-testid="stText"] {
-            color: #344767 !important;
+            color: #3f516d !important;
+            line-height: 1.6;
         }
 
-        /* Custom Card Styles (similar to Soft UI shadow and radius) */
+        /* Custom Card Styles: Soft border and shadow */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
-            padding: 1rem;
-            border-radius: 0.75rem; /* Rounded corners */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px; /* Smoother, larger radius */
+            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); /* Soft shadow */
+            border: 1px solid #e3eaf3; /* Very light border */
             background: white;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        div[data-testid="stVerticalBlock"]:hover,
+        div[data-testid="stHorizontalBlock"]:hover {
+             box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Primary Button Style (Green submit button) */
-        .stButton>button {
-            background-color: #4CAF50; 
-            color: white;
-            border-radius: 0.5rem;
-            border: none;
-            padding: 0.5rem 1rem;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        .stButton>button:hover {
-            background-color: #388E3C; 
-            color: white;
-        }
-
-        /* Header Style */
+        /* Header Styles: Soft teal/blue color */
         h1 {
-            color: #344767; 
+            color: #5890b9; /* Soft teal/blue for main headers */
             font-weight: 700;
             margin-bottom: 0.5rem;
             margin-top: 0;
             padding-bottom: 0.5rem;
         }
         h2, h3, h4 {
-            color: #344767; 
+            color: #5890b9; 
             font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
         }
         
-        /* Metric styling: Ensure label and value are dark */
+        /* Primary Button Style (Soft Green) */
+        .stButton>button {
+            background-color: #81c784; /* Pastel green submit button */
+            color: white;
+            border-radius: 8px;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+        .stButton>button:hover {
+            background-color: #66bb6a; /* Slightly darker green on hover */
+            transform: translateY(-1px);
+        }
+
+        /* Metric styling */
         div[data-testid="stMetric"] {
-            background-color: #f0f2f5; 
-            border-radius: 0.5rem;
+            background-color: #f0f8ff; /* Very light blue background */
+            border-radius: 8px;
             padding: 1rem;
-            border: 1px solid #dee2e6;
+            border: 1px solid #c8d9e6;
         }
-        /* Metric value color (this was often invisible) */
         div[data-testid="stMetricValue"] {
-            color: #344767 !important;
+            color: #3f516d !important;
+            font-size: 1.8rem;
+            font-weight: 700;
         }
-        /* Metric label color */
         div[data-testid="stMetricLabel"] label {
-            color: #344767 !important;
+            color: #5890b9 !important; /* Pastel blue label */
             font-weight: 600;
+            text-transform: uppercase;
         }
 
-        /* File Uploader styling: Ensure label is dark */
-        div[data-testid="stFileUploader"] label {
-            font-weight: 600;
-            color: #344767;
+        /* Info/Warning banners */
+        div[data-testid="stAlert"] {
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        /* Sidebar Navigation Fix: Ensure radio button text is visible and styled */
+        .st-emotion-cache-1cypcdb label {
+            color: #3f516d !important;
+            font-weight: 500;
+            padding: 8px 10px;
+            border-radius: 6px;
+        }
+        .st-emotion-cache-1cypcdb [data-baseweb="radio"] > div {
+            border-radius: 6px;
         }
         
-        /* Sidebar Navigation Fix: Ensure radio button text is visible */
-        .st-emotion-cache-1cypcdb label {
-            color: #344767 !important;
-        }
-
         /* Horizontal rule color */
         hr {
-            border-top: 1px solid #dee2e6; 
+            border-top: 1px solid #e3eaf3; 
             margin: 1.5rem 0;
         }
 
@@ -136,7 +154,7 @@ def admin_header(title):
 
 
 # ==============================================================================
-# 3. HELPER FUNCTIONS (DATA PROCESSING & SAMPLE DOWNLOADS)
+# 3. HELPER FUNCTIONS (DATA PROCESSING & SAMPLE DOWNLOADS - UNCHANGED)
 # ==============================================================================
 
 def read_uploaded_file(uploaded_file, name):
