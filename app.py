@@ -152,8 +152,20 @@ def process_consolidation(raw_file_objects, mapping_file_object, uploaded_pick_l
             how='left'
         )
         
-        # Handle unmapped items (No 'Our SKU' found)
-        merged_df[MAP_OUR_SKU_COL] = merged_df[MAP_OUR_SKU_COL].fillna('UNMAPPED-' + merged_df[MAP_CHANNEL_SKU_COL])
+        # --- FIX IMPLEMENTED HERE ---
+        # Handle unmapped items (No 'Our SKU' found) by safely concatenating 'UNMAPPED-'
+        
+        # 1. Ensure Channel SKU is string type for safe concatenation
+        merged_df[MAP_CHANNEL_SKU_COL] = merged_df[MAP_CHANNEL_SKU_COL].astype(str)
+
+        # 2. Create a boolean mask for rows where MAP_OUR_SKU_COL is missing (NaN)
+        unmapped_mask = merged_df[MAP_OUR_SKU_COL].isna()
+        
+        # 3. Apply the fallback concatenation ('UNMAPPED-' + Channel SKU) only to the masked rows
+        merged_df.loc[unmapped_mask, MAP_OUR_SKU_COL] = (
+            'UNMAPPED-' + merged_df.loc[unmapped_mask, MAP_CHANNEL_SKU_COL]
+        )
+        # -----------------------------
 
         # 3. Final Consolidation and Output Formatting
         # Aggregate QTY by all identifying columns
