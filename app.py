@@ -27,123 +27,127 @@ CHANNEL_COLUMNS_MAP = {
 ALLOWED_FILE_TYPES = ['csv', 'xlsx']
 
 # ==============================================================================
-# 2. UI/UX STYLING (PASTEL ADMIN PANEL CSS - MAX READABILITY)
+# 2. UI/UX STYLING (MATDASH ADMIN CSS)
 # ==============================================================================
 
 def inject_admin_panel_css():
-    """Injects custom CSS for a soft, pastel Admin Panel look with enforced dark text."""
+    """Injects custom CSS to mimic the MatDash Admin Template look."""
     st.markdown(
         """
         <style>
         /* Base Streamlit Overrides */
         #MainMenu, footer, header {visibility: hidden;}
 
-        /* --- Pastel Admin Panel Styling --- */
+        /* --- MatDash Admin Styling --- */
         
-        /* MAXIMUM READABILITY FIXES 
-        Enforce dark text across all primary components 
-        */
+        /* Base Colors & Text */
         :root, body, .stApp {
-            color: #3f516d !important; /* Deep slate blue for primary text */
-            background-color: #fcfdff; /* Very soft white/cream background */
+            color: #1f2937 !important; /* Dark Slate Gray for primary text */
+            background-color: #f8f9fa; /* Light gray background */
+            padding-top: 1.5rem;
         }
         
-        /* General Text, Input Labels, and spans */
+        /* General Text, Labels, Spans */
         p, label, .stMarkdown, div[data-testid="stText"], 
-        div[data-testid*="stFileUploader"] label, 
-        div[data-testid="stSidebar"] *, 
-        span {
-            color: #3f516d !important;
+        div[data-testid*="stFileUploader"] label, span {
+            color: #1f2937 !important;
             line-height: 1.6;
+            font-size: 1rem;
         }
-
-        /* Set sidebar background explicitly */
+        
+        /* Sidebar Styling */
         .st-emotion-cache-1g82m8b, .st-emotion-cache-1wmy991 { /* Sidebar container classes */
-            background-color: #f7f9fc !important;
+            background-color: #ffffff !important; /* White sidebar */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
         }
 
-        /* Custom Card Styles: Soft border and shadow */
+        /* Custom Card Styles: Defined shadow, crisp look */
         div[data-testid="stVerticalBlock"],
         div[data-testid="stHorizontalBlock"] {
             padding: 1.5rem;
-            border-radius: 12px; 
-            box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.08); 
-            border: 1px solid #e3eaf3; 
+            border-radius: 6px; /* Sharper corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08); /* Stronger shadow */
+            border: 1px solid #e5e7eb; /* Light border */
             background: white;
             margin-bottom: 2rem;
-            transition: box-shadow 0.3s ease-in-out;
+            transition: box-shadow 0.2s ease-in-out;
         }
-        div[data-testid="stVerticalBlock"]:hover,
-        div[data-testid="stHorizontalBlock"]:hover {
-             box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Header Styles: Soft teal/blue color */
+        
+        /* Header Styles: Deep Indigo Accent */
         h1 {
-            color: #5890b9; 
-            font-weight: 700;
+            color: #4f46e5; /* Deep Indigo for main title */
+            font-weight: 800;
             margin-bottom: 0.5rem;
             margin-top: 0;
             padding-bottom: 0.5rem;
         }
         h2, h3, h4 {
-            color: #5890b9; 
-            font-weight: 600;
+            color: #1f2937; /* Dark text for sub-headers */
+            font-weight: 700;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
         }
         
-        /* Primary Button Style (Soft Green) */
+        /* Primary Button Style (Emerald Green for Action) */
         .stButton>button {
-            background-color: #81c784; 
-            color: white !important; /* Ensure button text is white */
-            border-radius: 8px;
+            background-color: #10b981; /* Emerald Green */
+            color: white !important; 
+            border-radius: 6px;
             border: none;
             padding: 0.6rem 1.2rem;
             font-weight: bold;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
+            transition: background-color 0.2s;
         }
         .stButton>button:hover {
-            background-color: #66bb6a; 
-            transform: translateY(-1px);
+            background-color: #059669; /* Darker green on hover */
         }
 
-        /* Metric styling */
+        /* Metric styling: Clean and prominent */
         div[data-testid="stMetric"] {
-            background-color: #f0f8ff; 
-            border-radius: 8px;
+            background-color: #f3f4f6; /* Very light gray */
+            border-radius: 6px;
             padding: 1rem;
-            border: 1px solid #c8d9e6;
+            border: 1px solid #d1d5db;
         }
         div[data-testid="stMetricValue"] {
-            color: #3f516d !important;
-            font-size: 1.8rem;
-            font-weight: 700;
+            color: #4f46e5 !important; /* Indigo value */
+            font-size: 2rem;
+            font-weight: 800;
         }
         div[data-testid="stMetricLabel"] label {
-            color: #5890b9 !important; 
+            color: #1f2937 !important; 
             font-weight: 600;
             text-transform: uppercase;
         }
-        
-        /* Sidebar Navigation Fix: Ensure radio button text is visible and styled */
+
+        /* Sidebar Navigation: Highlight Active Tab with Indigo */
         .st-emotion-cache-1cypcdb label {
-            color: #3f516d !important;
-            font-weight: 500;
+            color: #1f2937 !important;
+            font-weight: 600;
             padding: 8px 10px;
-            border-radius: 6px;
+            border-radius: 4px;
         }
-        /* Ensure radio button active text is dark */
         .st-emotion-cache-1cypcdb [data-baseweb="radio"] > div {
-            color: #3f516d !important;
-            border-radius: 6px;
+             /* Target active radio label background for Indigo accent */
+             background-color: transparent;
         }
+        .st-emotion-cache-1cypcdb [aria-checked="true"] {
+             background-color: #eef2ff !important; /* Very light indigo background for active tab */
+             border-left: 4px solid #4f46e5; /* Indigo accent bar */
+             border-radius: 0px 6px 6px 0px; 
+             margin-left: -15px; /* Pull active tab out slightly */
+             padding-left: 10px !important;
+             color: #4f46e5 !important; /* Active tab text color */
+        }
+        .st-emotion-cache-1cypcdb [aria-checked="true"] label {
+            color: #4f46e5 !important; /* Active tab text color */
+        }
+
 
         /* Horizontal rule color */
         hr {
-            border-top: 1px solid #e3eaf3; 
+            border-top: 1px solid #e5e7eb; 
             margin: 1.5rem 0;
         }
 
@@ -342,7 +346,7 @@ def render_picklist_tab():
         st.session_state.mapping_file_object = mapping_file
     
     with col_map_download:
-        st.markdown("") 
+        st.markdown('<div style="margin-top: 2rem;"></div>', unsafe_allow_html=True) # Vertical spacing
         st.download_button(
             label="⬇️ Download Sample Mapping Template",
             data=get_sample_mapping_file(),
@@ -404,7 +408,7 @@ def render_picklist_tab():
         st.metric(label="Pick List Files Uploaded", value=uploaded_pick_list_count, delta=f"Total Slots: {TOTAL_POTENTIAL_UPLOADS}")
 
     with col_submit:
-        st.markdown('<br>', unsafe_allow_html=True) 
+        st.markdown('<br>', unsafe_allow_html=True) # Vertical spacing
         
         if st.session_state.mapping_file_object is None:
             st.error("🔴 **Mapping File Required:** Please upload the Master SKU Mapping File (Section 1).")
@@ -459,14 +463,16 @@ def main():
 
     # Sidebar Navigation
     with st.sidebar:
-        st.title("Operations Menu")
+        st.markdown('<div style="margin-top: 1rem; font-size: 1.5rem; color: #4f46e5; font-weight: 700;">OPERATIONS HUB</div>', unsafe_allow_html=True)
+        st.markdown('<hr style="border-top: 1px solid #e5e7eb;">', unsafe_allow_html=True)
         selected_tab = st.radio(
-            "Go to:",
+            "Navigation:",
             ["📦 Pick List Compiler", "📊 GST Filing Tools"],
-            format_func=lambda x: x.replace(" ", " • ")
+            format_func=lambda x: x.replace(" ", " • "),
+            key="main_navigation"
         )
         st.markdown("---")
-        st.info("Developed for streamlined supplier operations.")
+        st.info("Built for streamlined supplier operations.")
 
     # Render the selected tab
     if selected_tab == "📦 Pick List Compiler":
